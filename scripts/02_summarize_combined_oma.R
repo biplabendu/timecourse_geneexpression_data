@@ -4,7 +4,7 @@ library(dplyr)
 # read file ---------------------------------------------------------------
 
 dat <- read.csv(
-  "./ORTHOLOGY/result/combined_oma_v1.csv",
+  "./result/combined_oma_v1.csv",
   na.strings = c("", " ")
 ) |> 
   as_tibble()
@@ -35,9 +35,9 @@ dat |>
   arrange(
     desc(n_genes)
   ) |> 
-  filter(
-    n_genes > 100
-  ) |> 
+  # filter(
+  #   n_genes > 100
+  # ) |> 
   View()
 
 
