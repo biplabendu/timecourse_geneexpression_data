@@ -1,7 +1,6 @@
 library(dplyr)
 
-
-# read file ---------------------------------------------------------------
+# read ortho file ---------------------------------------------------------------
 
 dat <- read.csv(
   "./result/combined_oma_v1.csv",
@@ -12,18 +11,18 @@ dat <- read.csv(
 
 # summary 1: different combinations ---------------------------------------
 
-dat |> 
-  # mutate_all(as.factor) |> summary()
-  mutate(
-    across(
-      everything(),
-      ~ if_else(
-        !is.na(.),
-        "present",
-        "x"
-      )
+dat |> glimpse()
+# mutate_all(as.factor) |> summary()
+mutate(
+  across(
+    everything(),
+    ~ if_else(
+      !is.na(.),
+      "present",
+      "x"
     )
-  ) |> 
+  )
+) |> 
   group_by(
     across(
       everything()
