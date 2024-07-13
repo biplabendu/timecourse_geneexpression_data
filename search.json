@@ -1,0 +1,23 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Compare time-course gene expression across species",
+    "section": "",
+    "text": "This website contain analyses by Aman and Billu for an on-going project that compares time-series gene expression data across species.\nMajority of the data sets used are from the paper by Laloum and Robinson-Rechavi (add reference here)."
+  },
+  {
+    "objectID": "index.html#some-issues",
+    "href": "index.html#some-issues",
+    "title": "Compare time-course gene expression across species",
+    "section": "Some issues:",
+    "text": "Some issues:\n\n\nFor how many mouse genes, there are ≥ 2 genes in at least one more species?\n\n\n\nNumber of 1:1 orthlogs between\n\n\nCflo:other species (orthology)\nNumber of genes\n\n\n\n\n1:1\n2257\n\n\n1:n possible\n368"
+  },
+  {
+    "objectID": "contact.html",
+    "href": "contact.html",
+    "title": "Contact",
+    "section": "",
+    "text": "Aman Prasanna\n\n\n\nBiplabendu (Billu) Das\nbiplabendu.das@gmail.com\nhttps://biplabendu.github.io/homepage/"
+  }
+]
