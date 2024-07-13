@@ -1,0 +1,134 @@
+---
+title: "Compare time-course gene expression across species"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+dttm <- Sys.Date()
+
+test <- FALSE
+```
+
+
+---
+
+This website contain analyses by Aman and Billu for an on-going project that compares time-series gene expression data across species.
+
+Majority of the data sets used are from the paper by Laloum and Robinson-Rechavi (add reference here).
+
+
+> Last updated on `r dttm`.
+
+___
+
+# Load data and glimpse
+
+
+```{r}
+library(dplyr)
+
+# read ortho file ---------------------------------------------------------------
+
+dat <- read.csv(
+  here::here(
+    "./result/combined_oma_v2.csv"
+  ),
+  na.strings = c("", " ", "NA")
+) |> 
+  as_tibble()
+
+
+# summary 1: different combinations ---------------------------------------
+
+dat |> 
+# mutate_all(as.factor) |> summary()
+mutate(
+  across(
+    !c(human_name),
+    ~ if_else(
+      !is.na(.),
+      "present",
+      "x"
+    )
+  )
+) |>
+  group_by(
+    across(
+      everything()
+      # !human_name
+    )
+  ) |> 
+  tally(
+    name = "n_genes"
+  ) |> 
+  arrange(
+    is.na(human_name),
+    desc(human_name),
+    desc(n_genes)
+  ) |> 
+  # filter(
+  #   n_genes > 100
+  # ) |> 
+  DT::datatable(
+    caption = "Genes present across species."
+  )
+```
+
+# Genes present in all species
+
+```{r}
+# summary 2: present in all -----------------------------------------------
+
+sub <- dat |> 
+  filter(
+    !if_any(
+      !human_name,
+      ~ is.na(.)
+    )
+  )
+cat(
+  "There are", 
+  length(unique(na.omit(sub$cflo_ID))), 
+  "unique ant genes that are also present in the other 8 species"
+)
+
+
+```
+
+## Some issues:
+
+```{r}
+cat(
+  "For how many mouse genes, there are ≥ 2 genes in at least one more species?"
+)
+sub |> 
+  tidyr::separate_longer_delim(
+    cflo_ID,
+    ", "
+  ) |> 
+  group_by(
+    cflo_ID
+  ) |> 
+  tally() |> 
+  mutate(
+    n = if_else(
+      n == 1,
+      "1:1",
+      "1:n possible"
+    )
+  ) |> 
+  group_by(
+    n
+  ) |> 
+  tally() |> 
+  rename(
+    `Cflo:other species (orthology)` = n,
+    `Number of genes` = nn
+  ) |> 
+  kableExtra::kable(
+    caption = "Number of 1:1 orthlogs between"
+  )
+
+```
+

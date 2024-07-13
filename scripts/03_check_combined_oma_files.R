@@ -11,7 +11,7 @@ dat <- read.csv(
 
 # summary 1: different combinations ---------------------------------------
 
-dat |> glimpse()
+dat |> 
 # mutate_all(as.factor) |> summary()
 mutate(
   across(
