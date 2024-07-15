@@ -36,6 +36,13 @@ dat <- read.csv(
   ),
   na.strings = c("", " ", "NA")
 ) |> 
+  select(
+    - human_name
+  ) |> 
+  tidyr::separate_longer_delim(
+    cflo_ID,
+    ", "
+  ) |> 
   as_tibble()
 
 
@@ -43,29 +50,27 @@ dat <- read.csv(
 
 dat |> 
 # mutate_all(as.factor) |> summary()
-mutate(
-  across(
-    !c(human_name),
-    ~ if_else(
-      !is.na(.),
-      "present",
-      "x"
+  mutate(
+    across(
+      !cflo_ID,
+      ~ if_else(
+        !is.na(.),
+        "present",
+        "x"
+      )
     )
-  )
-) |>
+  ) |> 
   group_by(
     across(
-      everything()
-      # !human_name
+      # everything()
+      !cflo_ID
     )
   ) |> 
   tally(
-    name = "n_genes"
+    name = "number of Cflo genes"
   ) |> 
   arrange(
-    is.na(human_name),
-    desc(human_name),
-    desc(n_genes)
+    desc(`number of Cflo genes`)
   ) |> 
   # filter(
   #   n_genes > 100
@@ -81,9 +86,13 @@ mutate(
 # summary 2: present in all -----------------------------------------------
 
 sub <- dat |> 
+  select(
+    cflo_ID,
+    everything()
+  ) |> 
   filter(
     !if_any(
-      !human_name,
+      everything(),
       ~ is.na(.)
     )
   )
@@ -98,15 +107,13 @@ cat(
 
 ## Some issues:
 
+Not all of the above Cflo genes are 1:1 orthologs, some likely have paralogs in other species.
+
 ```{r}
 cat(
-  "For how many mouse genes, there are ≥ 2 genes in at least one more species?"
+  "For how many ant genes, there are ≥ 2 genes in at least one more species?"
 )
 sub |> 
-  tidyr::separate_longer_delim(
-    cflo_ID,
-    ", "
-  ) |> 
   group_by(
     cflo_ID
   ) |> 
@@ -127,7 +134,7 @@ sub |>
     `Number of genes` = nn
   ) |> 
   kableExtra::kable(
-    caption = "Number of 1:1 orthlogs between"
+    caption = "Number of 1:1 orthlogs between Cflo and other species"
   )
 
 ```
