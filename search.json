@@ -11,7 +11,7 @@
     "href": "index.html#some-issues",
     "title": "Compare time-course gene expression across species",
     "section": "Some issues:",
-    "text": "Some issues:\n\n\nFor how many mouse genes, there are ≥ 2 genes in at least one more species?\n\n\n\nNumber of 1:1 orthlogs between\n\n\nCflo:other species (orthology)\nNumber of genes\n\n\n\n\n1:1\n2257\n\n\n1:n possible\n368"
+    "text": "Some issues:\nNot all of the above Cflo genes are 1:1 orthologs, some likely have paralogs in other species.\n\n\nFor how many ant genes, there are ≥ 2 genes in at least one more species?\n\n\n\nNumber of 1:1 orthlogs between Cflo and other species\n\n\nCflo:other species (orthology)\nNumber of genes\n\n\n\n\n1:1\n2257\n\n\n1:n possible\n368"
   },
   {
     "objectID": "contact.html",
