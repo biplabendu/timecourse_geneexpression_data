@@ -1,5 +1,6 @@
 # BD
 **/*.DS_Store
+.databases/*
 
 # History files
 .Rhistory
