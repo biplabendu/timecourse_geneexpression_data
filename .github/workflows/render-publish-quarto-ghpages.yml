@@ -29,9 +29,18 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get -y install \
-            libglpk.so.40
+          apt-get update && apt-get install -y --no-install-recommends \
+          make \
+          libcurl4-openssl-dev \
+          libssl-dev \
+          zlib1g-dev \
+          libglpk-dev \
+          libxml2-dev \
+          pandoc \
+          libpng-dev \
+          libicu-dev \
+          libfontconfig1-dev \
+          libfreetype6-dev
 
       - name: Install R Dependencies
         uses: r-lib/actions/setup-renv@v2
