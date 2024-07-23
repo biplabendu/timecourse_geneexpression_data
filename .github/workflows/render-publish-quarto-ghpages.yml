@@ -27,6 +27,12 @@ jobs:
           r-version: '4.3.1'
           use-public-rspm: true
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install \
+            libglpk.so.40
+
       - name: Install R Dependencies
         uses: r-lib/actions/setup-renv@v2
         with:
