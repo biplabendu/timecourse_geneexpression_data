@@ -63,8 +63,8 @@ for (i in 1:length(samples)) {
 
 data.db <- list()
 for (i in 1:length(paths)) {
-  data.db[[i]] <- paths[[i]] |> 
-    read.csv(
+  data.db[[i]] <- read.csv(
+      here::here(paths[[i]]),
       sep = "\t",
       header = TRUE,
       na.strings = c("", " ", "na", "NA", "Na")
@@ -72,20 +72,16 @@ for (i in 1:length(paths)) {
     as_tibble() |> 
     rename(
       gene_name = ID
-    ) |> 
-    make_database_expression(
-      cycle = sample.cycles[i],
-      db_name = sample.names[i]
     )
 }
 # set names
 data.db <- data.db |> setNames(sample.names)
 
-cat("Here are the tables, in each database.")
-purrr::map(
-  data.db,
-  ~ src_dbi(.x)
-)
+# cat("Here are the tables, in each database.")
+# purrr::map(
+#   data.db,
+#   ~ src_dbi(.x)
+# )
 ```
 
 # Load data
@@ -97,7 +93,13 @@ writeLines(paste0("Selected Dataset: ", which.sample))
 dat <-
   data.db %>%
   purrr::pluck(which.sample) |> 
-  tbl(paste0(which.sample ,"_log2expression")) %>%
+  # tbl(paste0(which.sample ,"_log2expression")) %>%
+  mutate(
+    across(
+      !gene_name,
+      ~ log2(.x + 1)
+    )
+  ) |> 
   select(gene_name, everything()) %>%
   collect()
 
@@ -231,7 +233,8 @@ datExpr |>
 # Calculate Kendall's tau-b correlation for each gene-gene pair
 sim_matrix <- calculate_gene_gene_sim(
   data = datExpr,
-  name = which.sample
+  name = which.sample,
+  cache = FALSE
 )
 
 
@@ -566,5 +569,63 @@ plot(
   # vertex.shape="none"
 )
 # dev.off()
+
+```
+
+
+# Save module identity
+
+Obtain a list of genes in each module
+
+```{r module_genes_list}
+# Make a list that returns gene names for a given cluster
+module_genes <- list()
+
+modules.to.exclude <- c("")
+# modules.to.exclude <- c(paste0("C",c(2,5,6,7,10:17,19)))
+which.modules <- module_ids %>% 
+  filter(!new_labels %in% modules.to.exclude) %>%
+  pull(old_labels)
+which.labels <- module_ids %>% 
+  filter(!new_labels %in% modules.to.exclude) %>%
+  pull(new_labels)
+
+# Get the genes from each of the modules
+for (i in 1:length(which.modules)) {
+  # which color
+  mod.color = as.character(which.modules[[i]])
+  # subset
+  module_genes[[i]] <- names(datExpr)[which(moduleColors==mod.color)]
+  names(module_genes)[[i]] <- as.character(which.labels[[i]])
+}
+
+# # check the result | works
+# names(module_genes)
+# module_genes['C22']
+
+# [13 Dec 2021]
+# Save a csv with the module identity information for all genes used in building the GCN
+# make a dataframe with gene_name and module_identity
+for (i in 1:length(module_genes)){
+  if (i == 1){
+    dat_module_gene <- data.frame(
+      gene_name = module_genes[[i]],
+      module_identity = as.character(names(module_genes)[i])
+    )
+  }
+  else{
+   foo <- data.frame(
+     gene_name = module_genes[[i]],
+     module_identity = as.character(names(module_genes)[i])
+   )
+   dat_module_gene <- rbind(dat_module_gene, foo) 
+  }
+  
+}
+
+# TO DO:
+# Save the `dat_module_gene` as a database table in the respective database.
+
+
 
 ```
