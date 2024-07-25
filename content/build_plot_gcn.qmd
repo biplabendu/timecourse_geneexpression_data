@@ -37,7 +37,7 @@ sample.names <- c("dmel-head","mmus-brain_stem")
 sample.cycles <- c("LD", "DD")
 
 ## SPECIFY THE DATASET TO BUILD GCN WITH
-which.sample <- sample.names[1]
+which.sample <- sample.names[2]
 ```
 
 
