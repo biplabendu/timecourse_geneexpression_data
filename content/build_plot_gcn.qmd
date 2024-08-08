@@ -601,7 +601,7 @@ saveRDS(
   module_genes,
   here::here(
     glue::glue(
-      "./data/tmp/{which_sample}_module_genes.RDS"
+      "./data/tmp/{which.sample}_module_genes.RDS"
     )
   )
 )
