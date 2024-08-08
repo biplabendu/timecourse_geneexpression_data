@@ -407,7 +407,7 @@ plot(METree, main = "Clustering of module eigengenes",
 # We choose a height cut of 0.25, 
 # corresponding to correlation of 0.75 
 # (merge modules that have corr ≥ 0.75)
-MEDissThres = 0.25
+MEDissThres = 0.3
 
 # Plot the cut line into the dendrogram
 plot(METree, main = "Clustering of module eigengenes",
@@ -446,9 +446,6 @@ colorOrder = c("grey",
                WGCNA::standardColors(50));
 moduleLabels = match(moduleColors, colorOrder)-1
 ```
-
-
-
 
 
 ### 2.4 Calculate module-module similarity
@@ -542,7 +539,7 @@ network <- igraph::graph_from_adjacency_matrix(
 igraph::V(network)$color <- "yellow"
 
 # genes_ME <- factor(moduleColors, levels=colors) %>% summary()
-igraph::V(network)$size <- igraph::degree(network, mode = "total")*25
+igraph::V(network)$size <- igraph::degree(network, mode = "total")*2
 # V(network)$size <- log2(genes_ME)^1.3
 
 igraph::V(network)$label.color <- "black"
@@ -622,6 +619,15 @@ for (i in 1:length(module_genes)){
   }
   
 }
+
+saveRDS(
+  module_genes,
+  here::here(
+    glue::glue(
+      "./data/tmp/{which_sample}_module_genes.RDS"
+    )
+  )
+)
 
 # TO DO:
 # Save the `dat_module_gene` as a database table in the respective database.
