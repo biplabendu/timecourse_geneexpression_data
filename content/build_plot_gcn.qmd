@@ -117,35 +117,12 @@ dim(dat[-1])
 # Which genes are expressed throughout the day in forager heads?
   # count the number of time points that has ≥ 1 FPKM
   # subset the data and only keep the filtered genes
-
-# arguments
-min_expression = 1
-min_timepoints = 8
-
+  
 dat <- dat |> 
-  ## to do ----
-  ## convert into function
-  mutate(
-    n_samples = rowSums(
-      across(
-        !gene_name,
-        ~ .x >= min_expression
-      ),
-      na.rm = TRUE
-    )
-  ) |> 
-  filter(
-    n_samples >= min_timepoints
-  ) |> 
-  select(
-    - n_samples
-  ) |> 
-  # TEMP FIX ----
-  # Multiple rows per gene
-  # fix: only taking the first row
-  # might not be the best way
-  group_by(gene_name) |> 
-  slice(1)
+  subset_data(
+    min_expression = 1,
+    min_timepoints = 8
+  )
 
 writeLines("Dimensions of the data post-filtering step [Rows = #genes, Cols = #samples]")
 dim(dat[-1])
