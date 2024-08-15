@@ -29,12 +29,21 @@ knitr::opts_chunk$set(message = F)
 library(dplyr)
 library(dbplyr)
 library(ggplot2)
-for (i in list.files(here::here("R"), full.names = TRUE)) source(i)
+for (i in list.files(here::here("R"), full.names = TRUE)) {
+  source(i)
+}
 
 # SAMPLE NAME
 ## specify sample name
-sample.names <- c("dmel-head","mmus-brain_stem")
-sample.cycles <- c("LD", "DD")
+sample.names <- c(
+  # dmel
+  "dmel-head",
+  # mmus
+  "mmus-brain_stem", 
+  # panu
+  "panu-hypothalamus"
+)
+# sample.cycles <- c("LD", "DD")
 
 ## SPECIFY THE DATASET TO BUILD GCN WITH
 which.sample <- sample.names[2]
@@ -44,38 +53,9 @@ which.sample <- sample.names[2]
 # Create databases
 
 ```{r load_data}
-samples <- purrr::map(
-  sample.names,
-  function(x) {
-    c(
-      strsplit(x, "-")[[1]][1],
-      strsplit(x, "-")[[1]][2]
-    )
-  }
+load_data(
+  sample_names = sample.names
 )
-
-paths <- list()
-for (i in 1:length(samples)) {
- paths[[i]] <- glue::glue(
-   "tissue_data/{samples[[i]][1]}/{samples[[i]][2]}/{samples[[i]][2]}.txt"
- ) 
-}
-
-data.db <- list()
-for (i in 1:length(paths)) {
-  data.db[[i]] <- read.csv(
-      here::here(paths[[i]]),
-      sep = "\t",
-      header = TRUE,
-      na.strings = c("", " ", "na", "NA", "Na")
-    ) |> 
-    as_tibble() |> 
-    rename(
-      gene_name = ID
-    )
-}
-# set names
-data.db <- data.db |> setNames(sample.names)
 
 # cat("Here are the tables, in each database.")
 # purrr::map(
@@ -85,6 +65,8 @@ data.db <- data.db |> setNames(sample.names)
 ```
 
 # Load data
+
+## CONVERT TO FUNCTION
 
 ```{r}
 writeLines(paste0("Selected Dataset: ", which.sample))
@@ -135,6 +117,8 @@ This is our cleaned, input data file for building the circadian GCN.
 # Format data
 
 - Log2 transform the data
+
+## CONVERT TO FUNCTION
 
 ```{r format_data, fig.height=6, fig.width=6}
 
