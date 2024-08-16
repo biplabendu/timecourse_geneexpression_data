@@ -606,19 +606,6 @@
       ],
       "Hash": "d954cb1c57e8d8b756165d7ba18aa55a"
     },
-    "conflicted": {
-      "Package": "conflicted",
-      "Version": "1.2.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "cli",
-        "memoise",
-        "rlang"
-      ],
-      "Hash": "bb097fccb22d156624fd07cd2894ddb6"
-    },
     "cpp11": {
       "Package": "cpp11",
       "Version": "0.4.7",
@@ -1341,20 +1328,6 @@
       ],
       "Hash": "2bcca3848e4734eb3b16103bc9aa4b8e"
     },
-    "pacman": {
-      "Package": "pacman",
-      "Version": "0.5.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "methods",
-        "remotes",
-        "stats",
-        "utils"
-      ],
-      "Hash": "b37932b67288bc62bb81686b2f337a7d"
-    },
     "pak": {
       "Package": "pak",
       "Version": "0.7.2",
@@ -1460,20 +1433,6 @@
         "R"
       ],
       "Hash": "5e3c5dc0b071b21fa128676560dbe94d"
-    },
-    "remotes": {
-      "Package": "remotes",
-      "Version": "2.5.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "methods",
-        "stats",
-        "tools",
-        "utils"
-      ],
-      "Hash": "3ee025083e66f18db6cf27b56e23e141"
     },
     "renv": {
       "Package": "renv",

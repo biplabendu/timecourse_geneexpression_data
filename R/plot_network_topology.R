@@ -1,4 +1,5 @@
 plot_network_topology <- function(data,
+                                  powers,
                                   height = 0.75) {
   sft = data
   par(mfrow = c(1,2));

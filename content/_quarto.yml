@@ -20,9 +20,9 @@ website:
     left:
       - text: "Tempo of Gene Expression"
         file: index.qmd
+      - text: "Build GCN using timecourseRnaseq"
+        file: build_plot_gcn.qmd
       # ###-###-###-###-###-###-###-###-###-###-###-###-
-      # - text: "Jammer Stats"
-      #   file: statsbook/jammer1.qmd
       # - text: "Blocker Stats"
       #   file: statsbook/blocker1.qmd
       # # - text: "Eligibility"
