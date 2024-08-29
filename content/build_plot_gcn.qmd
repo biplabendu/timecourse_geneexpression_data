@@ -64,33 +64,11 @@ data.db <- load_data(
 # )
 ```
 
-# Load data
-
-## CONVERT TO FUNCTION
+# Log-transform data
 
 ```{r}
-writeLines(paste0("Selected Dataset: ", which.sample))
-
-# extract the (gene-expr X time-point-of-sampling) data
-dat <-
-  data.db %>%
-  purrr::pluck(which.sample) |> 
-  # tbl(paste0(which.sample ,"_log2expression")) %>%
-  mutate(
-    across(
-      !gene_name,
-      ~ log2(.x + 1)
-    )
-  ) |> 
-  select(gene_name, everything()) %>%
-  collect()
-
-writeLines(
-"What is the dimensions of the original dataset? 
-[Rows = #genes, Cols = #samples]"
-)
-dim(dat[-1])
-
+# Define the function
+dat <- log2_transform_data(data_list = data.db, sample = which.sample)
 ```
 
 # Filter data
@@ -113,77 +91,20 @@ dim(dat[-1])
 
 This is our cleaned, input data file for building the circadian GCN. 
 
-
 # Format data
 
 - Log2 transform the data
 
-## CONVERT TO FUNCTION
-
 ```{r format_data, fig.height=6, fig.width=6}
 
-datExpr = as.data.frame(t(dat[-c(1)]))
-names(datExpr) = dat$gene_name
-rownames(datExpr) = names(dat)[-c(1)]
+datExpr <- dat %>% 
+  transpose_data() 
 
-# USE THE FOLLOWING CODE TO CHECK IF YOU HAVE ANY BAD SAMPLES #
-  # gsg = goodSamplesGenes(datExpr, verbose = 3);
-  # gsg$allOK
+# datExpr %>% 
+#   check_sample_quality()
 
-  # sampleTree = hclust(dist(datExpr0), method = "average");
-  # # Plot the sample tree: Open a graphic output window of size 12 by 9 inches
-  # # The user should change the dimensions if the window is too large or too small.
-  # sizeGrWindow(12,9)
-  # #pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
-  # par(cex = 1);
-  # par(mar = c(0,4,2,0))
-  # plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
-  #      cex.axis = 1.5, cex.main = 2)
-
-# save the number of genes and samples
-# that will be used to create the circadian GCN
-nGenes = ncol(datExpr)
-nSamples = nrow(datExpr)
-
-writeLines("Visualizing the log-transformed data")
-
-datExpr |> 
-  tibble::rownames_to_column(
-    "sample"
-  ) |> 
-  as_tibble() |> 
-  tidyr::pivot_longer(
-    cols = !sample,
-    names_to = "gene_id",
-    values_to = "log2_fpkm"
-  ) |> 
-  mutate(
-    sample = stringr::str_remove(sample, "ZT")
-  ) |> 
-  ggplot(
-    aes(
-      x = log2_fpkm, 
-      # color = sample,
-      fill = sample
-    )
-  ) + 
-  geom_density(
-    position = "stack"
-  ) + 
-  theme_bw(25) +
-  scale_fill_manual(
-    values = viridis::viridis(nSamples)
-  ) +
-  theme(
-    legend.position = "bottom",
-    legend.justification = "right"
-  ) +
-  guides(
-    fill = guide_legend(
-      nrow = 3,
-      byrow=TRUE
-    )
-  )
+datExpr %>% 
+  plot_sample_expression()
 
 ```
 
