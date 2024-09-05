@@ -1,3 +1,4 @@
+# internal ----
 load_data <- function(sample_names) {
   # check inputs
   chk::chk_character(sample_names)

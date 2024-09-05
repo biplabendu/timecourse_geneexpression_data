@@ -52,6 +52,7 @@ which.sample <- sample.names[2]
 
 # Create databases
 
+
 ```{r load_data}
 data.db <- load_data(
   sample_names = sample.names
@@ -68,7 +69,10 @@ data.db <- load_data(
 
 ```{r}
 # Define the function
-dat <- log2_transform_data(data_list = data.db, sample = which.sample)
+dat <- log2_transform_data(
+  data = data.db[[which.sample]],
+  id_column = "gene_name"
+)
 ```
 
 # Filter data
@@ -81,7 +85,8 @@ dat <- log2_transform_data(data_list = data.db, sample = which.sample)
 dat <- dat |> 
   subset_data(
     min_expression = 10,
-    min_timepoints = 8
+    min_timepoints = 8,
+    id_column = "gene_name"
   )
 
 writeLines("Dimensions of the data post-filtering step [Rows = #genes, Cols = #samples]")
