@@ -1,17 +1,10 @@
 [
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Compare time-course gene expression across species",
+    "objectID": "contact.html",
+    "href": "contact.html",
+    "title": "Contact",
     "section": "",
-    "text": "This website contain analyses by Aman and Billu for an on-going project that compares time-series gene expression data across species.\nMajority of the data sets used are from the paper by Laloum and Robinson-Rechavi (add reference here)."
-  },
-  {
-    "objectID": "index.html#some-issues",
-    "href": "index.html#some-issues",
-    "title": "Compare time-course gene expression across species",
-    "section": "Some issues:",
-    "text": "Some issues:\nNot all of the above Cflo genes are 1:1 orthologs, some likely have paralogs in other species.\n\n\nFor how many ant genes, there are ≥ 2 genes in at least one more species?\n\n\n\nNumber of 1:1 orthlogs between Cflo and other species\n\n\nCflo:other species (orthology)\nNumber of genes\n\n\n\n\n1:1\n2257\n\n\n1:n possible\n368"
+    "text": "Aman Prasanna\n\n\n\nBiplabendu (Billu) Das\nbiplabendu.das@gmail.com\nhttps://biplabendu.github.io/homepage/"
   },
   {
     "objectID": "build_plot_gcn.html",
@@ -42,10 +35,17 @@
     "text": "USER INPUT REQUIRED —-\nTo create the adjacency matrix, we need to first identify the soft-thresholding power (see WGCNA for more info).\n\n\nShow code\nsft &lt;- analyze_network_topology(\n  data = datExpr\n)\n\n\nPerforming network topology analysis to pick \n  soft-thresholding power...\n   Power SFT.R.sq   slope truncated.R.sq mean.k. median.k. max.k.\n1      1   0.7170  1.8500          0.644  1840.0    2050.0   2390\n2      2   0.4340  0.5310          0.640  1280.0    1460.0   1970\n3      3   0.0697  0.1310          0.908   981.0    1100.0   1710\n4      4   0.0147 -0.0516          0.932   789.0     860.0   1520\n5      5   0.1640 -0.1660          0.871   655.0     686.0   1370\n6      6   0.3510 -0.2500          0.841   556.0     557.0   1250\n7      7   0.5100 -0.3140          0.824   480.0     458.0   1150\n8      8   0.6400 -0.3720          0.839   420.0     379.0   1070\n9      9   0.7400 -0.4140          0.857   372.0     319.0    995\n10    10   0.7990 -0.4530          0.859   331.0     270.0    931\n11    12   0.8650 -0.5220          0.861   269.0     198.0    825\n12    14   0.8840 -0.5770          0.862   223.0     148.0    740\n13    16   0.8920 -0.6230          0.862   189.0     113.0    669\n14    18   0.8870 -0.6720          0.857   162.0      87.2    610\n15    20   0.8930 -0.7060          0.870   140.0      68.7    559\n16    22   0.9060 -0.7350          0.891   122.0      54.9    516\n17    24   0.9000 -0.7690          0.890   108.0      44.8    478\n18    26   0.8820 -0.8050          0.876    95.8      36.6    444\n19    28   0.8810 -0.8300          0.883    85.6      30.6    414\n20    30   0.8880 -0.8520          0.891    77.0      25.5    388\nPlotting the resutls from the network topology analysis...\n\n\n\n\n\n\n\n\n\nDone.\n\n\n\nNOTE: The scale-free topology fit index reaches close to 1 (red horizontal line = 0.90) at a soft-thresholding-power == 9.\n\nNow, we can go ahead and create our adjacency matrix by power-transforming the similarity matrix (see WGCNA for more info).\n\n\nShow code\n## Specify the soft-thresholding-power\nsoft.power = 12\n\n# Construct adjacency matrix\n# TO DO: make function ----\nadj_matrix &lt;- WGCNA::adjacency.fromSimilarity(\n  sim_matrix,\n  power = soft.power,\n  type = \"signed\"\n) |&gt; \n  as.matrix()\n\nplot_sim_matrix(\n  matrix = adj_matrix\n)\n\n\nPlotting a chunk of the gene-gene similarity matrix with 200 genes."
   },
   {
-    "objectID": "contact.html",
-    "href": "contact.html",
-    "title": "Contact",
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Compare time-course gene expression across species",
     "section": "",
-    "text": "Aman Prasanna\n\n\n\nBiplabendu (Billu) Das\nbiplabendu.das@gmail.com\nhttps://biplabendu.github.io/homepage/"
+    "text": "This website contain analyses by Aman and Billu for an on-going project that compares time-series gene expression data across species.\nMajority of the data sets used are from the paper by Laloum and Robinson-Rechavi (add reference here)."
+  },
+  {
+    "objectID": "index.html#some-issues",
+    "href": "index.html#some-issues",
+    "title": "Compare time-course gene expression across species",
+    "section": "Some issues:",
+    "text": "Some issues:\nNot all of the above Cflo genes are 1:1 orthologs, some likely have paralogs in other species.\n\n\nFor how many ant genes, there are ≥ 2 genes in at least one more species?\n\n\n\nNumber of 1:1 orthlogs between Cflo and other species\n\n\nCflo:other species (orthology)\nNumber of genes\n\n\n\n\n1:1\n2257\n\n\n1:n possible\n368"
   }
 ]
