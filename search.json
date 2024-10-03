@@ -7,20 +7,6 @@
     "text": "Show code\nlibrary(dplyr)\nlibrary(dbplyr)\nlibrary(ggplot2)\nfor (i in list.files(here::here(\"R\"), full.names = TRUE)) {\n  source(i)\n}\n\n# SAMPLE NAME\n## specify sample name\nsample.names &lt;- c(\n  # dmel\n  \"dmel-head\",\n  # mmus\n  \"mmus-brain_stem\", \n  # panu\n  \"panu-hypothalamus\"\n)\n# sample.cycles &lt;- c(\"LD\", \"DD\")\n\n## SPECIFY THE DATASET TO BUILD GCN WITH\nwhich.sample &lt;- sample.names[2]"
   },
   {
-    "objectID": "build_plot_gcn.html#convert-to-function",
-    "href": "build_plot_gcn.html#convert-to-function",
-    "title": "Build gene co-expression network (GCN) from time-course gene expression data",
-    "section": "CONVERT TO FUNCTION",
-    "text": "CONVERT TO FUNCTION\n\n\nShow code\nwriteLines(paste0(\"Selected Dataset: \", which.sample))\n\n\nSelected Dataset: mmus-brain_stem\n\n\nShow code\n# extract the (gene-expr X time-point-of-sampling) data\ndat &lt;-\n  data.db %&gt;%\n  purrr::pluck(which.sample) |&gt; \n  # tbl(paste0(which.sample ,\"_log2expression\")) %&gt;%\n  mutate(\n    across(\n      !gene_name,\n      ~ log2(.x + 1)\n    )\n  ) |&gt; \n  select(gene_name, everything()) %&gt;%\n  collect()\n\nwriteLines(\n\"What is the dimensions of the original dataset? \n[Rows = #genes, Cols = #samples]\"\n)\n\n\nWhat is the dimensions of the original dataset? \n[Rows = #genes, Cols = #samples]\n\n\nShow code\ndim(dat[-1])\n\n\n[1] 17406     8"
-  },
-  {
-    "objectID": "build_plot_gcn.html#convert-to-function-1",
-    "href": "build_plot_gcn.html#convert-to-function-1",
-    "title": "Build gene co-expression network (GCN) from time-course gene expression data",
-    "section": "CONVERT TO FUNCTION",
-    "text": "CONVERT TO FUNCTION\n\n\nShow code\ndatExpr = as.data.frame(t(dat[-c(1)]))\nnames(datExpr) = dat$gene_name\nrownames(datExpr) = names(dat)[-c(1)]\n\n# USE THE FOLLOWING CODE TO CHECK IF YOU HAVE ANY BAD SAMPLES #\n  # gsg = goodSamplesGenes(datExpr, verbose = 3);\n  # gsg$allOK\n\n  # sampleTree = hclust(dist(datExpr0), method = \"average\");\n  # # Plot the sample tree: Open a graphic output window of size 12 by 9 inches\n  # # The user should change the dimensions if the window is too large or too small.\n  # sizeGrWindow(12,9)\n  # #pdf(file = \"Plots/sampleClustering.pdf\", width = 12, height = 9);\n  # par(cex = 1);\n  # par(mar = c(0,4,2,0))\n  # plot(sampleTree, main = \"Sample clustering to detect outliers\", sub=\"\", xlab=\"\", cex.lab = 1.5,\n  #      cex.axis = 1.5, cex.main = 2)\n\n# save the number of genes and samples\n# that will be used to create the circadian GCN\nnGenes = ncol(datExpr)\nnSamples = nrow(datExpr)\n\nwriteLines(\"Visualizing the log-transformed data\")\n\n\nVisualizing the log-transformed data\n\n\nShow code\ndatExpr |&gt; \n  tibble::rownames_to_column(\n    \"sample\"\n  ) |&gt; \n  as_tibble() |&gt; \n  tidyr::pivot_longer(\n    cols = !sample,\n    names_to = \"gene_id\",\n    values_to = \"log2_fpkm\"\n  ) |&gt; \n  mutate(\n    sample = stringr::str_remove(sample, \"ZT\")\n  ) |&gt; \n  ggplot(\n    aes(\n      x = log2_fpkm, \n      # color = sample,\n      fill = sample\n    )\n  ) + \n  geom_density(\n    position = \"stack\"\n  ) + \n  theme_bw(25) +\n  scale_fill_manual(\n    values = viridis::viridis(nSamples)\n  ) +\n  theme(\n    legend.position = \"bottom\",\n    legend.justification = \"right\"\n  ) +\n  guides(\n    fill = guide_legend(\n      nrow = 3,\n      byrow=TRUE\n    )\n  )"
-  },
-  {
     "objectID": "build_plot_gcn.html#user-input-required--",
     "href": "build_plot_gcn.html#user-input-required--",
     "title": "Build gene co-expression network (GCN) from time-course gene expression data",
