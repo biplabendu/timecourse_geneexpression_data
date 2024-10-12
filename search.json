@@ -1,12 +1,5 @@
 [
   {
-    "objectID": "contact.html",
-    "href": "contact.html",
-    "title": "Contact",
-    "section": "",
-    "text": "Aman Prasanna\n\n\n\nBiplabendu (Billu) Das\nbiplabendu.das@gmail.com\nhttps://biplabendu.github.io/homepage/"
-  },
-  {
     "objectID": "build_plot_gcn.html",
     "href": "build_plot_gcn.html",
     "title": "Build gene co-expression network (GCN) from time-course gene expression data",
@@ -33,5 +26,12 @@
     "title": "Compare time-course gene expression across species",
     "section": "Some issues:",
     "text": "Some issues:\nNot all of the above Cflo genes are 1:1 orthologs, some likely have paralogs in other species.\n\n\nFor how many ant genes, there are ≥ 2 genes in at least one more species?\n\n\n\nNumber of 1:1 orthlogs between Cflo and other species\n\n\nCflo:other species (orthology)\nNumber of genes\n\n\n\n\n1:1\n2257\n\n\n1:n possible\n368"
+  },
+  {
+    "objectID": "contact.html",
+    "href": "contact.html",
+    "title": "Contact",
+    "section": "",
+    "text": "Aman Prasanna\n\n\n\nBiplabendu (Billu) Das\nbiplabendu.das@gmail.com\nhttps://biplabendu.github.io/homepage/"
   }
 ]
