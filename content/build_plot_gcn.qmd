@@ -77,6 +77,7 @@ dat <- log2_transform_data(
 
 # Filter data
 
+
 ```{r clean_data}
 # Which genes are expressed throughout the day in forager heads?
   # count the number of time points that has ≥ 1 FPKM
@@ -88,10 +89,6 @@ dat <- dat |>
     min_timepoints = 8,
     id_column = "gene_name"
   )
-
-writeLines("Dimensions of the data post-filtering step [Rows = #genes, Cols = #samples]")
-dim(dat[-1])
-
 ```
 
 This is our cleaned, input data file for building the circadian GCN. 
@@ -171,6 +168,7 @@ plot_sim_matrix(
 
 The following steps are performed as per guidelines from the WGCNA package and several tutorials made available online.
 
+
 ### 2.1 Create topological overalp matrix
 
 ```{r adj_to_dissTOM, fig.height=4, fig.width=8}
@@ -202,17 +200,13 @@ User defined parameters:
 minModuleSize = 50
 # Module identification using dynamic tree cut:
 modules <- create_modules(
-  tree = geneTree,
-  dissTOM = dissTOM,
-  min_module_size = minModuleSize
+ tree = geneTree,
+ dissTOM = dissTOM,
+ min_module_size = 100,
+ merge_cutoff_similarity = 0.9,
+ data = datExpr
 )
-merge = create_modules(
-  tree = geneTree,
-  dissTOM = dissTOM,
-  min_module_size = minModuleSize,
-  merge_cutoff_similarity = 0.8, # 70 % similarity
-  data = datExpr
-)
+
 ```
 
 ### 2.4 Calculate module-module similarity
@@ -220,7 +214,7 @@ merge = create_modules(
 ```{r module_sim_matrix, fig.height=6, fig.width=6}
 
 adj_matrix_ME <- calculate_module_module_sim(
-  merged_modules = merge
+  merged_modules = modules
 )
 
 ```
@@ -247,7 +241,7 @@ Obtain a list of genes in each module
 
 ```{r module_genes_list}
 module_genes <- tidy_modules(
-  merged_modules = merge$colors,
+  merged_modules = modules$colors,
   mapping_tbl = adj_matrix_ME$mapping_tbl,
   data = datExpr
 )
