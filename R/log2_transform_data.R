@@ -7,19 +7,30 @@
 #' @return a single dataframe with log2-transformed values.
 #' 
 #' @export
-log2_transform_data <- function(data, id_column = "gene_name") {
+log2_transform_data <- function(data, 
+                                id_column,
+                                log2 = TRUE) {
   chk::chk_data(data)
-  chk::chk_character(id_column)
-  chk::check_names(
-    data,
-    id_column
-  )
+  chk::chk_logical(log2)
   
-  data %>%
-    mutate(
-      across(
-        !all_of(id_column),
-        ~ log2(.x + 1)
-      )
+  if (log2) {
+    cat("Applying log2-transformation...")
+    chk::chk_character(id_column)
+    chk::check_names(
+      data,
+      id_column
     )
+    
+    out <- data |> 
+      mutate(
+        across(
+          !all_of(id_column),
+          ~ log2(.x + 1)
+        )
+      )
+    cat("Done.")
+    cat("\n")
+  }
+  
+  out
 }

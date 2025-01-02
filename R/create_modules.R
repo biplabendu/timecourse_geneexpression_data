@@ -1,13 +1,14 @@
 create_modules <- function(tree, 
                            dissTOM, 
-                           data = NULL,
-                           min_module_size = 50,
-                           merge_cutoff_similarity = NULL) {
+                           min_module_size,
+                           verbose = 0,
+                           data,
+                           merge_cutoff_similarity = 0.9) {
   modules <- dynamicTreeCut::cutreeDynamic(
     dendro = tree,
     distM = dissTOM,
     method = "hybrid",
-    verbose = 4,
+    verbose = verbose,
     deepSplit = 3, 
     # see WGCNA for more info on tuning parameters
     pamRespectsDendro = FALSE,
@@ -15,26 +16,27 @@ create_modules <- function(tree,
   ) |> 
     WGCNA::labels2colors()
   
-  writeLines("How many genes are there in each of the initial modules (clusters) detected?")
-  table(modules) |> print()
-  
   # Calculate eigengenes
   MEList = WGCNA::moduleEigengenes(
-    datExpr, 
+    data, 
     colors = modules
   )
   MEs = MEList$eigengenes
   
   # Calculate dissimilarity of module eigengenes
   MEDiss = 1-cor(MEs, method = "kendall");
-  
   # Cluster module eigengenes
   METree = hclust(as.dist(MEDiss), method = "average");
   # Plot the result
   plot(
     METree, 
-    main = "Clustering of module eigengenes",
-    xlab = "", 
+    main = "Initial classification into modules",
+    xlab = glue::glue(
+      "Red horizontal line shows modules that are ≥ 
+        {merge_cutoff_similarity} similar."
+    ),
+    ylab = "Dissimilarity (height)",
+    ylim = c(0, 0.9),
     sub = "MEDiss = 1-cor(MEs, method = 'kendall')"
   )
   abline(
@@ -43,9 +45,8 @@ create_modules <- function(tree,
     col = "red", 
     lty = 2
   )
-  writeLines("Next steps: Select a cutoff to merge similar modules.")
   
-  if (!is.null(merge_cutoff_similarity) & !is.null(data)) {
+  if (!is.null(merge_cutoff_similarity)) {
     cat(
       paste(
         "Merging modules that have a correlation ≥", 
@@ -66,21 +67,31 @@ create_modules <- function(tree,
       # The merged module colors
     mergedColors = merged_modules$colors;
     # # Eigengenes of the new merged modules:
-    cat("Plotting the identified clusters (denoted with colors) before and after merging.")
+    cat(
+      "[ NOTE, FIGURE ] Plotting identified clusters before and after merging."
+    )
+    cat("\n\n")
     WGCNA::plotDendroAndColors(
       geneTree,
       cbind(modules, mergedColors),
-      c("Dynamic Tree Cut", "Merged dynamic"),
+      main = "Cluster Dendogram (Dynamic Tree Cut)",
+      c("Inital classification", "Merged dynamic"),
       dendroLabels = FALSE, 
       hang = 0.03,
       addGuide = TRUE, 
       guideHang = 0.05
     )
     
+    writeLines("Module (cluster) size:")
+    table(mergedColors) |> print()
+    
     # return the merged modules
-    merged_modules
+    mergedColors
     
   } else {
+    writeLines("Initial classification into modules (clusters):")
+    table(modules) |> print()
+    
     modules
   }
   

@@ -22,34 +22,53 @@
 #' @importFrom chk chk_data chk_number chk_lte
 #' @export
 subset_data <- function(data, 
-                        id_column = "gene_name",
+                        id_column,
                         min_expression, 
                         min_timepoints) {
   
   chk::chk_data(data)
-  chk::chk_number(min_expression)
-  chk::chk_number(min_timepoints)
-  chk::chk_lte(
-    min_timepoints,
-    ncol(data) - 1,
-  )
   
-  data |> 
-    mutate(
-      n_samples = rowSums(
-        across(
-          !all_of(id_column),
-          ~ .x >= min_expression
-        ),
-        na.rm = TRUE
-      )
-    ) |> 
-    filter(
-      n_samples >= min_timepoints
-    ) |> 
-    select(
-      - n_samples
+  if (!is.null(min_expression) & !is.null(min_timepoints)) {
+    cat("Subsetting data...")
+    chk::chk_number(min_expression)
+    chk::chk_number(min_timepoints)
+    chk::chk_lte(
+      min_timepoints,
+      ncol(data) - 1,
     )
+    chk::chk_character(id_column)
+    chk::check_names(
+      data,
+      id_column
+    )
+    
+    out <- data |> 
+      mutate(
+        n_samples = rowSums(
+          across(
+            !all_of(id_column),
+            ~ .x >= min_expression
+          ),
+          na.rm = TRUE
+        )
+      ) |> 
+      filter(
+        n_samples >= min_timepoints
+      ) |> 
+      select(
+        - n_samples
+      )
+    
+    cat("Done.")
+    cat("\n")
+    cat(
+      glue::glue(
+        "[ NOTE ]: After subsetting, { nrow(out) } of { nrow(data) } rows remain."
+      )
+    )
+  }
+  
+  out
 }
 
 

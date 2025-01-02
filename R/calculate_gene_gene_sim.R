@@ -1,13 +1,12 @@
 calculate_gene_gene_sim <- function(data, 
                                     method = "kendall", 
-                                    name, 
+                                    name = NULL, 
                                     overwrite = FALSE,
-                                    cache = TRUE,
+                                    cache = FALSE,
                                     ...) {
-  chk::chk_character(name)
   chk::chk_data(data)
-  chk::chk_atomic(overwrite)
-  chk::chk_atomic(cache)
+  chk::chk_logical(overwrite)
+  chk::chk_logical(cache)
   
   if(cache == FALSE) {
     cat("Running gene-gene similarity...")
@@ -19,6 +18,8 @@ calculate_gene_gene_sim <- function(data,
     cat("Done.")
     cat("\n")
   } else {
+    chk::chk_scalar(name)
+    
     # set up tmp workspace
     path = ".databases/.tmp/"
     sim_matrix_path = glue::glue(
@@ -26,7 +27,7 @@ calculate_gene_gene_sim <- function(data,
     )
     
     if (!dir.exists(here::here(path))) {
-      cat("Creating '.databases/.tmp/'...")
+      cat("Creating '.databases/.tmp/' for saving cache...")
       dir.create(here::here(path), recursive = TRUE)
       # this step takes time
       cat("Done.")

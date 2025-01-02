@@ -50,8 +50,7 @@ which.sample <- sample.names[2]
 ```
 
 
-# Create databases
-
+# (INT) Create databases
 
 ```{r load_data}
 data.db <- load_data(
@@ -65,7 +64,21 @@ data.db <- load_data(
 # )
 ```
 
-# Log-transform data
+# ONE-SHOT (make_modules)
+
+```{r}
+# data.db[[1]] |> 
+#   glimpse() |> 
+#   make_modules(
+#     min_expression = 1,
+#     min_timepoints = 4,
+#   ) |> 
+#   str(max.level = 1)
+```
+
+# STEP-BY-STEP
+
+# (PREP) Log-transform data
 
 ```{r}
 # Define the function
@@ -75,7 +88,7 @@ dat <- log2_transform_data(
 )
 ```
 
-# Filter data
+# (SUBSET) Filter data
 
 ```{r clean_data}
 # Which genes are expressed throughout the day in forager heads?
@@ -96,17 +109,21 @@ dim(dat[-1])
 
 This is our cleaned, input data file for building the circadian GCN. 
 
-# Format data
+# (WGCNA) Format data
 
-- Log2 transform the data
+- transpose the dataset: rows = timepoints, cols = genes
 
 ```{r format_data, fig.height=6, fig.width=6}
 
 datExpr <- dat %>% 
   transpose_data() 
+```
 
-# datExpr %>% 
-#   check_sample_quality()
+## QC
+
+```{r}
+datExpr %>%
+  check_sample_quality()
 
 datExpr %>% 
   plot_sample_expression()
@@ -124,11 +141,15 @@ sim_matrix <- calculate_gene_gene_sim(
   cache = FALSE
 )
 
-plot_sim_matrix(
-  matrix = sim_matrix,
-  n = 100
-)
+```
 
+## QC
+
+```{r}
+cat("Before power transformation:")
+plot_sim_matrix(
+  matrix = sim_matrix
+)
 ```
 
 
@@ -148,10 +169,9 @@ sft <- analyze_network_topology(
 Now, we can go ahead and create our adjacency matrix by power-transforming the similarity matrix (see WGCNA for more info).
 
 
-
 ```{r adjacency_matrix, fig.height=6, fig.width=6}
 ## Specify the soft-thresholding-power
-soft.power = 12
+soft.power = sft$powerEstimate
 
 # Construct adjacency matrix
 # TO DO: make function ----
@@ -162,6 +182,7 @@ adj_matrix <- WGCNA::adjacency.fromSimilarity(
 ) |> 
   as.matrix()
 
+cat("After power transformation:")
 plot_sim_matrix(
   matrix = adj_matrix
 )
@@ -176,13 +197,13 @@ The following steps are performed as per guidelines from the WGCNA package and s
 ```{r adj_to_dissTOM, fig.height=4, fig.width=8}
 # Turn adjacency into topological overlap
 dissTOM = 1 - WGCNA::TOMsimilarity(adj_matrix)
-
 # Call the hierarchical clustering function
 geneTree = perform_hclust(
   data = dissTOM
 )
 
 ```
+
 
 ### 2.2 Identify clusters
 
@@ -192,20 +213,25 @@ User defined parameters:
 
 > We like large modules, so we set the minimum module size relatively high (50).
 
-### 2.3 Merge similar modules
-
-User defined parameters:
-
-- minimum correlation between two modules above which they are merged into one | var-name: MEDissThres
-
 ```{r identify_clusters}
 minModuleSize = 50
 # Module identification using dynamic tree cut:
 modules <- create_modules(
   tree = geneTree,
   dissTOM = dissTOM,
+  data = datExpr,
   min_module_size = minModuleSize
 )
+```
+
+
+### 2.3 Merge similar modules
+
+User defined parameters:
+
+- minimum correlation between two modules above which they are merged into one | var-name: MEDissThres
+
+```{r merge_clusters}
 merge = create_modules(
   tree = geneTree,
   dissTOM = dissTOM,

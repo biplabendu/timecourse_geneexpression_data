@@ -32,21 +32,23 @@ calculate_module_module_sim <- function(merged_modules) {
   colnames(adj_matrix_ME) <- module_ids$new_labels
   cat("Done.\n")
   
-  cat("Plotting the adjacency matrix that shows 
-  module-module similarity...")
-  gplots::heatmap.2(
-    t(adj_matrix_ME),
-    col=viridis::inferno(100),
-    # labRow=NA, labCol=NA,
-    trace='none', 
-    dendrogram='row',
-    xlab='', 
-    ylab='',
-    main='Adjacency matrix - MEs \n(module-module similarity)',
-    density.info='none', 
-    revC=TRUE
-  )
-  cat("Done.\n")
+  if (plot) {
+    cat("Plotting adjacency matrix for module-module similarity...")
+    gplots::heatmap.2(
+      t(adj_matrix_ME),
+      col = viridis::inferno(100),
+      # labRow = NA, 
+      # labCol = NA,
+      trace = 'none', 
+      dendrogram = 'row',
+      xlab = '', 
+      ylab = '',
+      main = 'Adjacency matrix - MEs \n(module-module similarity)',
+      density.info = 'none', 
+      revC = TRUE
+    )
+    cat("Done.\n")
+  }
   
   list(
     "ME" = adj_matrix_ME,
