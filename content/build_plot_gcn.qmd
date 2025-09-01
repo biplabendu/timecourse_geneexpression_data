@@ -64,8 +64,13 @@ data.db <- load_data(
 cat("Structure of input data:")
 data.db[[which.sample]] |> 
   head(5) |> 
+  mutate_if(
+    is.numeric,
+    ~ round(.x, 1)
+  ) |> 
   DT::datatable(
-    caption = "Column1: Name of feature (gene), Columns2-N: Timepoints, Value: Expression / Activity"
+    caption = "Column 1: Name of feature (gene), Columns 2-N: Timepoints, Value: Expression / Activity",
+    rownames = FALSE
   )
 
 # cat("Here are the tables, in each database.")
@@ -106,7 +111,7 @@ dat <- log2_transform_data(
   # count the number of time points that has ≥ 1 FPKM
   # subset the data and only keep the filtered genes
   
-dat <- dat |> 
+dat_sub <- dat |> 
   subset_data(
     min_expression = 10,
     min_timepoints = 8,
@@ -126,7 +131,7 @@ This is our cleaned, input data file for building the circadian GCN.
 
 ```{r format_data, fig.height=6, fig.width=6}
 
-datExpr <- dat %>% 
+datExpr <- dat_sub %>% 
   transpose_data() 
 ```
 
@@ -266,8 +271,9 @@ adj_matrix_ME <- calculate_module_module_sim(
 
 ```{r visualize_network, fig.height=8, fig.width=8}
 plot_adj_as_network(
+  layout = igraph::layout_as_tree,
   matrix = adj_matrix_ME$ME,
-  min_edge = 0.45,
+  min_edge = 0.5,
   node_label_size = 2,
   node_size = 45,
   edge_size = 5,
@@ -302,6 +308,8 @@ module_genes <- tidy_modules(
 # Save the `dat_module_gene` as a database table in the respective database.
 
 ```
+
+::: {.callout-note collapse=true}
 
 # Compare GCN vs. ants
 
@@ -353,4 +361,104 @@ genes_across_species |>
     rownames = FALSE
   )
 ```
+
+:::
+
+# Identify rhythmic modules
+
+```{r}
+db_rhy <- load_rhy_genes(
+  sample = which.sample
+)
+###-###-###-###-###-###-###-###-
+# Set your p-value of choice
+# col_pval = "BH.Q"
+col_pval = "default.pvalue"
+# col_pval = "raw.pvalue"
+###-###-###-###-###-###-###-###-
+l_module_genes <- module_genes |> 
+  arrange(module_identity) |> 
+  group_split(module_identity) |> 
+  purrr::map(
+    ~ .x |> pull(gene_name)
+  ) |> 
+  setNames(unique(module_genes[["module_identity"]]))
+
+l_rhy_genes <- db_rhy |> 
+  purrr::map(
+    ~ .x |> 
+      filter(
+        if_all(
+          c(col_pval),
+          ~ .x < 0.05
+        )
+      ) |> 
+      filter(
+        ID %in% unlist(l_module_genes)
+      ) |> 
+      pull(1) |> 
+      unique()
+  ) |> 
+  purrr::compact()
+```
+
+
+## Comparison
+
+> Modules vs. Rhythmic genes
+
+```{r comparison_full, fig.height=6, fig.width=14}
+writeLines("#####################################################
+How many genes are in each of my geneset of interest?
+#####################################################")
+
+## MAKE YOUR LIST OF GENES OF INTEREST ##
+
+# LIST ONE - WGCNA modules
+list1 <- l_module_genes
+writeLines("List of interesting genes #1
+----------------------------
+Genes in each of the identified gene-clusters or modules")
+sapply(list1, length)
+
+## LIST TWO - rhythmic genes
+list2 <- l_rhy_genes
+writeLines("List of interesting genes #2
+----------------------------
+Rhythmic genes identified by different algorithms")
+sapply(list2, length)
+
+## CHECK FOR OVERLAP
+# define size of genome
+size = length(unique(c(unlist(list1), unlist(list2))))
+# make a GOM object
+gom.1v2 <- GeneOverlap::newGOM(
+  list2, 
+  list1,
+  genome.size = size
+)
+# png(paste0(path_to_repo, "/results/figures/",
+#            "02_pogo_GCN/",
+#            sample.name[1],"_gom_1v2.png"),
+#     width = 35, height = 15, units = "cm", res = 300)
+GeneOverlap::drawHeatmap(
+  gom.1v2,
+  adj.p = TRUE,
+  cutoff=0.05,
+  what="odds.ratio",
+  # what="Jaccard",
+  log.scale = T,
+  note.col = "black",
+  grid.col = "Oranges"
+)
+# trash <- dev.off()
+
+ # writeLines("How many genes exactly are overlapping between the pairwise comparisons")
+# getMatrix(gom.1v4, name = "intersection") %>% t()
+
+writeLines("Visualizing the significant overlaps between your lists of interesting genes and the identified modules")
+
+```
+
+
 

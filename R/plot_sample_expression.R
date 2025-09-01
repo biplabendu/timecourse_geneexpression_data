@@ -1,7 +1,4 @@
 plot_sample_expression <- function(data) {
-  
-  # data = datExpr
-  
   # save the number of genes and samples
   # that will be used to create the circadian GCN
   nGenes = ncol(data)
