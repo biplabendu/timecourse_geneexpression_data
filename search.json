@@ -11,7 +11,7 @@
     "href": "build_plot_gcn.html",
     "title": "Build gene co-expression network (GCN) from time-course gene expression data",
     "section": "",
-    "text": "Show code\nlibrary(dplyr)\nlibrary(dbplyr)\nlibrary(ggplot2)\nfor (i in list.files(here::here(\"R\"), full.names = TRUE)) {\n  source(i)\n}\n\n# SAMPLE NAME\n## specify sample name\nsample.names &lt;- c(\n  # dmel\n  \"dmel-head\",\n  # mmus\n  \"mmus-brain_stem\", \n  # panu\n  \"panu-hypothalamus\"\n)\n# sample.cycles &lt;- c(\"LD\", \"DD\")\n\n## SPECIFY THE DATASET TO BUILD GCN WITH\nwhich.sample &lt;- sample.names[2]\n\nwriteLines(\"Sample: \", which.sample)"
+    "text": "Show code\nlibrary(dplyr)\nlibrary(dbplyr)\nlibrary(ggplot2)\nfor (i in list.files(here::here(\"R\"), full.names = TRUE)) {\n  source(i)\n}\n\n# SAMPLE NAME\n## specify sample name\nsample.names &lt;- c(\n  # dmel\n  \"dmel-head\",\n  # mmus\n  \"mmus-brain_stem\", \n  # panu\n  \"panu-hypothalamus\"\n)\n# sample.cycles &lt;- c(\"LD\", \"DD\")\n\n## SPECIFY THE DATASET TO BUILD GCN WITH\nwhich.sample &lt;- sample.names[2]\n\nwriteLines(\n  glue::glue(\"Sample: {which.sample}\")\n)\n\n\nSample: mmus-brain_stem"
   },
   {
     "objectID": "build_plot_gcn.html#qc",
