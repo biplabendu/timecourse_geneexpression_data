@@ -167,6 +167,18 @@
       ],
       "Hash": "1ec786f8b958a01ceb245883701873b1"
     },
+    "GeneOverlap": {
+      "Package": "GeneOverlap",
+      "Version": "1.38.0",
+      "Source": "Bioconductor",
+      "Requirements": [
+        "RColorBrewer",
+        "gplots",
+        "methods",
+        "stats"
+      ],
+      "Hash": "ceaf0be95da25a0455e84d45e436f443"
+    },
     "GenomeInfoDb": {
       "Package": "GenomeInfoDb",
       "Version": "1.38.8",
