@@ -47,6 +47,8 @@ sample.names <- c(
 
 ## SPECIFY THE DATASET TO BUILD GCN WITH
 which.sample <- sample.names[2]
+
+writeLines("Sample: ", which.sample)
 ```
 
 
@@ -56,6 +58,13 @@ which.sample <- sample.names[2]
 data.db <- load_data(
   sample_names = sample.names
 )
+
+cat("Structure of input data:")
+data.db[[which.sample]] |> 
+  head(5) |> 
+  DT::datatable(
+    caption = "Column1: Name of feature (gene), Columns2-N: Timepoints, Value: Expression / Activity"
+  )
 
 # cat("Here are the tables, in each database.")
 # purrr::map(
@@ -246,7 +255,7 @@ merge = create_modules(
 ```{r module_sim_matrix, fig.height=6, fig.width=6}
 
 adj_matrix_ME <- calculate_module_module_sim(
-  merged_modules = merge
+  merged_modules = merge[["modules"]]
 )
 
 ```

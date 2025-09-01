@@ -43,7 +43,7 @@ create_modules <- function(tree,
     h = 1 - merge_cutoff_similarity, 
     lwd = 4,
     col = "red", 
-    lty = 2
+    lty = 1
   )
   
   if (!is.null(merge_cutoff_similarity)) {
@@ -86,7 +86,10 @@ create_modules <- function(tree,
     table(mergedColors) |> print()
     
     # return the merged modules
-    mergedColors
+    list(
+      "colors" = mergedColors,
+      "modules" = merged_modules
+    )
     
   } else {
     writeLines("Initial classification into modules (clusters):")

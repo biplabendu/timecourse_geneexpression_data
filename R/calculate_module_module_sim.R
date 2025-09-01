@@ -1,4 +1,4 @@
-calculate_module_module_sim <- function(merged_modules) {
+calculate_module_module_sim <- function(merged_modules, plot = TRUE) {
   
   cat("Calculating module-module similarity based 
   on module-eigengene-expression...")
