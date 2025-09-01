@@ -48,7 +48,9 @@ sample.names <- c(
 ## SPECIFY THE DATASET TO BUILD GCN WITH
 which.sample <- sample.names[2]
 
-writeLines("Sample: ", which.sample)
+writeLines(
+  glue::glue("Sample: {which.sample}")
+)
 ```
 
 
@@ -282,7 +284,7 @@ Obtain a list of genes in each module
 
 ```{r module_genes_list}
 module_genes <- tidy_modules(
-  merged_modules = merge$colors,
+  merged_modules = merge[["colors"]],
   mapping_tbl = adj_matrix_ME$mapping_tbl,
   data = datExpr
 )
@@ -299,6 +301,56 @@ module_genes <- tidy_modules(
 # TO DO:
 # Save the `dat_module_gene` as a database table in the respective database.
 
-
-
 ```
+
+# Compare GCN vs. ants
+
+```{r}
+genes_across_species <- module_genes |> 
+  convert_id(
+    from = "mouse",
+    to = c("cflo", "drosophila")
+  )
+
+genes_across_species |> 
+  group_by(gene_name, module_identity) |> 
+  reframe(
+    dmel = length(
+      unique(
+        na.omit(drosophila_ID)
+      )
+    ),
+    cflo = length(
+      unique(
+        na.omit(cflo_ID)
+      )
+    )
+  ) |> 
+  arrange(
+    module_identity,
+    desc(dmel),
+    desc(cflo)
+  ) |> 
+  mutate(
+    across(
+      c(dmel, cflo),
+      ~ case_when(
+        .x > 1 ~ "multi",
+        .x == 1 ~ "single",
+        .x == 0 ~ "x",
+        .default = NA
+      ) |> 
+        factor(
+          levels = c("multi", "single", "x")
+        )
+    )
+  ) |> 
+  group_by(module_identity, dmel, cflo) |> 
+  tally() |> 
+  arrange(module_identity, desc(n)) |> 
+  ungroup() |> 
+  DT::datatable(
+    rownames = FALSE
+  )
+```
+
