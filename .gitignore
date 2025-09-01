@@ -1,6 +1,7 @@
 # BD
 **/*.DS_Store
 .databases/*
+manuscript/
 
 # History files
 .Rhistory

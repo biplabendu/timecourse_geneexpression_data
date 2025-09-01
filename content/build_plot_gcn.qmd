@@ -173,7 +173,7 @@ sft <- analyze_network_topology(
 )
 ```
 
-> NOTE: The scale-free topology fit index reaches close to 1 (red horizontal line = 0.90) at a `soft-thresholding-power == 9`.
+> NOTE: The scale-free topology fit index reaches close to 1 (red horizontal line) at a `soft-thresholding-power` of `r sft$powerEstimate`.
 
 Now, we can go ahead and create our adjacency matrix by power-transforming the similarity matrix (see WGCNA for more info).
 
