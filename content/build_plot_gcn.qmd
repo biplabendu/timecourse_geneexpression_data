@@ -106,6 +106,18 @@ dat <- log2_transform_data(
 
 # (SUBSET) Filter data
 
+```{r}
+# Default: min_expression and min_timepoints
+min_expression <- dat |> 
+  select(-gene_name) |> 
+  summarize(across(everything(), ~ mean(.x, na.rm = TRUE))) |> 
+  rowMeans() |> 
+  ceiling()
+
+min_timepoints <- ceiling(ncol(dat)*(2/3))
+```
+
+
 ```{r clean_data}
 # Which genes are expressed throughout the day in forager heads?
   # count the number of time points that has ≥ 1 FPKM
@@ -113,8 +125,8 @@ dat <- log2_transform_data(
   
 dat_sub <- dat |> 
   subset_data(
-    min_expression = 10,
-    min_timepoints = 8,
+    min_expression = min_expression,
+    min_timepoints = min_timepoints,
     id_column = "gene_name"
   )
 
@@ -123,6 +135,21 @@ dim(dat[-1])
 
 ```
 
+# (SUMMARIZE) One series per gene
+
+```{r}
+dat_sub_unique <- dat_sub |>
+  group_by(gene_name) |> 
+  reframe(
+    across(
+      everything(),
+      ~ mean(.x, na.rm = TRUE)
+    )
+  )
+  
+```
+
+
 This is our cleaned, input data file for building the circadian GCN. 
 
 # (WGCNA) Format data
@@ -130,8 +157,7 @@ This is our cleaned, input data file for building the circadian GCN.
 - transpose the dataset: rows = timepoints, cols = genes
 
 ```{r format_data, fig.height=6, fig.width=6}
-
-datExpr <- dat_sub %>% 
+datExpr <- dat_sub_unique %>% 
   transpose_data() 
 ```
 
@@ -180,14 +206,38 @@ sft <- analyze_network_topology(
 )
 ```
 
+
 > NOTE: The scale-free topology fit index reaches close to 1 (red horizontal line) at a `soft-thresholding-power` of `r sft$powerEstimate`.
+
+
+```{r}
+my_estimate <- sft$fitIndices |> 
+  filter(
+    SFT.R.sq > 0.8 &
+      SFT.R.sq <= 0.9,
+    Power > 5 &
+      Power < 14
+  ) |> 
+  arrange(
+    Power
+  ) |> 
+  head(1) |> 
+  pull(1)
+```
+
 
 Now, we can go ahead and create our adjacency matrix by power-transforming the similarity matrix (see WGCNA for more info).
 
 
 ```{r adjacency_matrix, fig.height=6, fig.width=6}
 ## Specify the soft-thresholding-power
-soft.power = sft$powerEstimate
+soft.power = if_else(
+  sft$powerEstimate < 16,
+  max(sft$powerEstimate, my_estimate),
+  my_estimate
+)
+
+cat("Selected soft-power:", soft.power)
 
 # Construct adjacency matrix
 # TO DO: make function ----
@@ -248,6 +298,8 @@ User defined parameters:
 - minimum correlation between two modules above which they are merged into one | var-name: MEDissThres
 
 ```{r merge_clusters}
+cutoff <- 0.8
+
 merge = create_modules(
   tree = geneTree,
   dissTOM = dissTOM,
@@ -255,6 +307,23 @@ merge = create_modules(
   merge_cutoff_similarity = 0.8, # 70 % similarity
   data = datExpr
 )
+
+n_modules <- ncol(merge$modules$newMEs)
+
+while (n_modules > 15) {
+  cutoff <- cutoff - 0.05
+  merge <- create_modules(
+    tree = geneTree,
+    dissTOM = dissTOM,
+    min_module_size = minModuleSize,
+    merge_cutoff_similarity = cutoff, # 70 % similarity
+    data = datExpr
+  )
+  n_modules <- ncol(merge$modules$newMEs)
+}
+
+cat("Cutoff:", cutoff)
+cat("Number of modules:", n_modules)
 ```
 
 ### 2.4 Calculate module-module similarity
@@ -273,9 +342,9 @@ adj_matrix_ME <- calculate_module_module_sim(
 plot_adj_as_network(
   layout = igraph::layout_as_tree,
   matrix = adj_matrix_ME$ME,
-  min_edge = 0.5,
-  node_label_size = 2,
-  node_size = 45,
+  min_edge = 0.65,
+  node_label_size = 1.2,
+  node_size = 35,
   edge_size = 5,
   node_frame_col = "grey20",
   node_fill_col = "grey80",
@@ -507,7 +576,7 @@ datKME = WGCNA::signedKME(
 
 Plotting the mean (± 95% CI) connectivity of genes in different modules
 
-```{r, fig.height=8, fig.width=8}
+```{r, fig.height=10, fig.width=8}
 pd <- position_dodge(0.1)
 
 # which_var <- "kTotal"
@@ -523,7 +592,14 @@ Alldegrees1 |>
   mutate(
     module_identity = factor(
       module_identity, 
-      levels = sort(unique(module_genes$module_identity)) |> rev()
+      levels = paste0(
+        "C",
+        sort(
+          unique(module_genes$module_identity) |> 
+            stringr::str_replace("C", "") |> 
+            as.integer()
+        )
+      ) |> rev()
     )
   ) |> 
   summarySE(
@@ -574,6 +650,9 @@ Alldegrees1 |>
   facet_wrap(
     ~ type,
     nrow = 2
+  ) +
+  scale_x_continuous(
+    n.breaks = 4
   ) +
   theme_bw(25) +
   # scale_color_manual(values=c("#F20505","#F5D736","#0FBF67")) +
