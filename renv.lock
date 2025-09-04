@@ -51,6 +51,13 @@
       ],
       "Hash": "27587689922e22f60ec9ad0182a0a825"
     },
+    "BH": {
+      "Package": "BH",
+      "Version": "1.84.0-0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a8235afbcd6316e6e91433ea47661013"
+    },
     "Biobase": {
       "Package": "Biobase",
       "Version": "2.62.0",
@@ -305,6 +312,17 @@
         "utils"
       ],
       "Hash": "8c7115cd3a0e048bda2a7cd110549f7a"
+    },
+    "NLP": {
+      "Package": "NLP",
+      "Version": "0.3-0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "utils"
+      ],
+      "Hash": "389135737af0889d2fe7ed47a9e5bd4e"
     },
     "R6": {
       "Package": "R6",
@@ -618,6 +636,19 @@
       ],
       "Hash": "d954cb1c57e8d8b756165d7ba18aa55a"
     },
+    "conflicted": {
+      "Package": "conflicted",
+      "Version": "1.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "cli",
+        "memoise",
+        "rlang"
+      ],
+      "Hash": "bb097fccb22d156624fd07cd2894ddb6"
+    },
     "cpp11": {
       "Package": "cpp11",
       "Version": "0.4.7",
@@ -892,6 +923,22 @@
         "withr"
       ],
       "Hash": "44c6a2f8202d5b7e878ea274b1092426"
+    },
+    "ggrepel": {
+      "Package": "ggrepel",
+      "Version": "0.9.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "ggplot2",
+        "grid",
+        "rlang",
+        "scales",
+        "withr"
+      ],
+      "Hash": "cc3361e234c4a5050e29697d675764aa"
     },
     "glue": {
       "Package": "glue",
@@ -1554,6 +1601,17 @@
       ],
       "Hash": "c19df082ba346b0ffa6f833e92de34d1"
     },
+    "slam": {
+      "Package": "slam",
+      "Version": "0.1-52",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "stats"
+      ],
+      "Hash": "b794b05d64b1ea017695449c410d33a9"
+    },
     "stringi": {
       "Package": "stringi",
       "Version": "1.8.4",
@@ -1689,6 +1747,30 @@
       ],
       "Hash": "829f27b9c4919c16b593794a6344d6c0"
     },
+    "timecourseRnaseq": {
+      "Package": "timecourseRnaseq",
+      "Version": "0.0.0.9000",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "timecourseRnaseq",
+      "RemoteUsername": "biplabendu",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "c0b70c31d3a2ea92f3344caf788834b15e37b982",
+      "Requirements": [
+        "RColorBrewer",
+        "conflicted",
+        "dplyr",
+        "ggplot2",
+        "ggrepel",
+        "stringr",
+        "tidyr",
+        "tm",
+        "wordcloud",
+        "wordcloud2"
+      ],
+      "Hash": "c03ccb98c8e54629fffe39f9f2de4def"
+    },
     "tinytex": {
       "Package": "tinytex",
       "Version": "0.52",
@@ -1698,6 +1780,26 @@
         "xfun"
       ],
       "Hash": "cfbad971a71f0e27cec22e544a08bc3b"
+    },
+    "tm": {
+      "Package": "tm",
+      "Version": "0.7-13",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "BH",
+        "NLP",
+        "R",
+        "Rcpp",
+        "graphics",
+        "parallel",
+        "slam",
+        "stats",
+        "tools",
+        "utils",
+        "xml2"
+      ],
+      "Hash": "b08f690bf35ad78ffefabc95ae19db2e"
     },
     "utf8": {
       "Package": "utf8",
@@ -1757,6 +1859,32 @@
         "graphics"
       ],
       "Hash": "07909200e8bbe90426fbfeb73e1e27aa"
+    },
+    "wordcloud": {
+      "Package": "wordcloud",
+      "Version": "2.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "RColorBrewer",
+        "Rcpp",
+        "methods"
+      ],
+      "Hash": "dddb6538141ed1e2435cb63c6c748d16"
+    },
+    "wordcloud2": {
+      "Package": "wordcloud2",
+      "Version": "0.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "base64enc",
+        "grDevices",
+        "graphics",
+        "htmlwidgets"
+      ],
+      "Hash": "10274bd096f5c2ad7471ea0eea0c1424"
     },
     "xfun": {
       "Package": "xfun",

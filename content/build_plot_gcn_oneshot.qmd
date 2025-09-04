@@ -1,0 +1,363 @@
+---
+title: "Build gene co-expression network (GCN) from time-course gene expression data"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+dttm <- Sys.Date()
+```
+
+---
+
+> Last updated on `r dttm`.
+
+___
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = F)
+knitr::opts_chunk$set(message = F)
+
+## For more inspiration on customizing the html output, refer to the following:
+# https://bookdown.org/yihui/rmarkdown/html-document.html#table-of-contents
+
+```
+
+
+```{r lib_params}
+library(dplyr)
+library(dbplyr)
+library(ggplot2)
+for (i in list.files(here::here("R"), full.names = TRUE)) {
+  source(i)
+}
+
+# SAMPLE NAME
+## specify sample name
+sample.names <- c(
+  # dmel
+  "dmel-head",
+  "dmel-body",
+  "dmel-heart",
+  # mmus
+  "mmus-brain_stem", 
+  "mmus-cerebellum", 
+  "mmus-hypothalamus", 
+  "mmus-heart", 
+  # panu
+  "panu-brain_stem",
+  "panu-cerebellum",
+  "panu-hypothalamus",
+  "panu-heart",
+  "panu-scn"
+)
+# sample.cycles <- c("LD", "DD")
+
+## SPECIFY THE DATASET TO BUILD GCN WITH
+which.sample <- "panu-scn"
+
+writeLines(
+  glue::glue("Sample: {which.sample}")
+)
+```
+
+
+```{r load_data, echo=FALSE}
+data.db <- load_data(
+  sample_names = sample.names
+)
+
+cat("Structure of input data:")
+data.db[[which.sample]] |> 
+  head(5) |> 
+  mutate_if(
+    is.numeric,
+    ~ round(.x, 1)
+  ) |> 
+  DT::datatable(
+    caption = "Column 1: Name of feature (gene), Columns 2-N: Timepoints, Value: Expression / Activity",
+    rownames = FALSE
+  )
+
+# cat("Here are the tables, in each database.")
+# purrr::map(
+#   data.db,
+#   ~ src_dbi(.x)
+# )
+```
+
+# ONE-SHOT (make_modules)
+
+## Make and plot modules 
+```{r fig.height=6, fig.width=6}
+mods <- timecourseRnaseq::make_modules(
+  data = data.db[[which.sample]],
+  log2 = TRUE,
+  id_column = "gene_name",
+  min_expression = NULL,  # automatically estimated
+  min_timepoints = NULL,  # automatically estimated
+  method = "wgcna",
+  qc = TRUE,
+  sim_method = "kendall",
+  soft_power = NULL,      # automatically estimated
+  min_module_size = 50,
+  max_modules = 16,
+  merge_cutoff_similarity = 0.9,
+  plot_network_min_edge = 0.5,
+  plot_network = FALSE,
+  tidy_modules = TRUE
+  )
+
+# "Returned object"
+mods |> str(max.level = 1)
+```
+
+## Modify network plot
+
+> Internal function; use `:::` to call
+
+```{r fig.height=6, fig.width=6}
+timecourseRnaseq:::plot_adj_as_network(
+  matrix = mods[["adj_matrix_ME"]][["ME"]],
+  # layout = igraph::layout.sugiyama,
+  layout = igraph::layout_in_circle, # changed 
+  min_edge = 0.6,
+  node_label_size = 1.2,
+  node_size = 20,
+  edge_size = 3,
+  node_frame_col = "grey20",
+  node_fill_col = "grey80",
+  vertex.frame.width = 3
+)
+```
+
+
+# Annotate the network
+
+Obtain a list of genes in each module
+
+```{r module_genes_list}
+module_genes <- mods[["module_genes"]]
+```
+
+## Identify rhythmic modules
+
+```{r}
+db_rhy <- load_rhy_genes(
+  sample = which.sample
+)
+###-###-###-###-###-###-###-###-
+# Set your p-value of choice
+# col_pval = "BH.Q"
+col_pval = "default.pvalue"
+# col_pval = "raw.pvalue"
+###-###-###-###-###-###-###-###-
+l_module_genes <- module_genes |> 
+  arrange(module_identity) |> 
+  group_split(module_identity) |> 
+  purrr::map(
+    ~ .x |> pull(gene_name)
+  ) |> 
+  setNames(unique(module_genes[["module_identity"]]))
+
+l_rhy_genes <- db_rhy |> 
+  purrr::map(
+    ~ .x |> 
+      filter(
+        if_all(
+          all_of(col_pval),
+          ~ .x < 0.05
+        )
+      ) |> 
+      filter(
+        ID %in% unlist(l_module_genes)
+      ) |> 
+      pull(1) |> 
+      unique()
+  ) |> 
+  purrr::compact()
+```
+
+
+## Comparison
+
+> Modules vs. Rhythmic genes
+
+```{r comparison_full, fig.height=6, fig.width=14}
+writeLines("#####################################################
+How many genes are in each of my geneset of interest?
+#####################################################")
+
+## MAKE YOUR LIST OF GENES OF INTEREST ##
+
+# LIST ONE - WGCNA modules
+list1 <- l_module_genes
+writeLines("List of interesting genes #1
+----------------------------
+Genes in each of the identified gene-clusters or modules")
+sapply(list1, length)
+
+## LIST TWO - rhythmic genes
+list2 <- l_rhy_genes
+writeLines("List of interesting genes #2
+----------------------------
+Rhythmic genes identified by different algorithms")
+sapply(list2, length)
+
+## CHECK FOR OVERLAP
+# define size of genome
+size = length(unique(c(unlist(list1), unlist(list2))))
+# make a GOM object
+gom.1v2 <- GeneOverlap::newGOM(
+  list2, 
+  list1,
+  genome.size = size
+)
+# png(paste0(path_to_repo, "/results/figures/",
+#            "02_pogo_GCN/",
+#            sample.name[1],"_gom_1v2.png"),
+#     width = 35, height = 15, units = "cm", res = 300)
+GeneOverlap::drawHeatmap(
+  gom.1v2,
+  adj.p = TRUE,
+  cutoff=0.05,
+  what="odds.ratio",
+  # what="Jaccard",
+  log.scale = T,
+  note.col = "black",
+  grid.col = "Oranges"
+)
+# trash <- dev.off()
+
+ # writeLines("How many genes exactly are overlapping between the pairwise comparisons")
+# getMatrix(gom.1v4, name = "intersection") %>% t()
+
+writeLines("Visualizing the significant overlaps between your lists of interesting genes and the identified modules")
+
+```
+
+# Network statistics
+
+From [WGCNA-tutorial](https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/Simulated-07-Membership.pdf)
+
+
+## Intramodular connectivity
+
+"We begin by calculating the intramodular connectivity for each gene. (In network literature, connectivity is often referred to as ”degree”.) The function intramodularConnectivity computes:
+
+- the whole network connectivity *kTotal*,
+- the within (intra)module connectivity *kWithin*, 
+- the extra-modular connectivity *kOut*=kTotal-kWithin, and 
+- the difference of the intra- and extra-modular connectivities *kDiff* = `kIn - kOut` = `2*kIN-kTotal`
+
+```{r}
+# From what I can tell, colorh1 in the tutorial refers to moduleColors
+colorh1 <- mods[["modules"]]$colors
+adj_matrix <- mods[["adj_matrix"]]
+
+# Calculate the connectivities of the genes
+Alldegrees1 = WGCNA::intramodularConnectivity(
+  adjMat = adj_matrix, 
+  colors = colorh1
+) |> 
+  mutate(
+    gene_name = rownames(adj_matrix),
+    across(
+      matches("^k"),
+      ~ round(.x, 2)
+    )
+  ) |> 
+  glimpse()
+```
+
+Plotting the mean (± 95% CI) connectivity of genes in different modules
+
+```{r, fig.height=10, fig.width=8}
+pd <- position_dodge(0.1)
+
+# which_var <- "kTotal"
+which_var <- c("kTotal", "kWithin", "kOut", "kDiff")
+
+Alldegrees1 |> 
+  # rownames_to_column("gene_name") %>% 
+  left_join(
+    module_genes, 
+    join_by(gene_name)
+  ) |> 
+  glimpse() |> 
+  # PLOT FROM RAW DATA
+  mutate(
+    module_identity = factor(
+      module_identity, 
+      levels = paste0(
+        "C",
+        sort(
+          unique(module_genes$module_identity) |> 
+            stringr::str_replace("C", "") |> 
+            as.integer()
+        )
+      ) |> rev()
+    )
+  ) |> 
+  summarySE(
+    measurevar = which_var, 
+    groupvars = "module_identity"
+  ) |> 
+  mutate(
+    type = factor(
+      type,
+      levels = which_var
+    )
+  ) |> 
+  # Plot
+  ggplot(
+    aes(
+      y = module_identity, 
+      x = mean,
+      group = interaction(module_identity, type)
+    )
+  ) +
+  geom_vline(xintercept = 0, col = "maroon", alpha = 0.7) +
+  labs(
+    y = "",
+    x = glue::glue(
+      "Connectivity"
+    ),
+    title = ""
+  ) +
+  ## Add error bar here
+  geom_errorbar(
+    aes(xmin = mean-ci, xmax = mean+ci),
+    width = 0.3, 
+    position=pd, 
+    lwd = 1.3,
+    col="black", 
+    alpha = 1
+  ) +
+  # Add the points on top of the error bars
+  geom_point(
+    position = pd, 
+    size = 3,
+    col = "black", 
+    fill = "orange",
+    show.legend = F, 
+    pch = 21,
+    alpha = 0.9
+  ) +
+  facet_wrap(
+    ~ type,
+    nrow = 2,
+    scales = "free_x"
+  ) +
+  scale_x_continuous(
+    n.breaks = 4
+  ) +
+  theme_bw(25) +
+  # scale_color_manual(values=c("#F20505","#F5D736","#0FBF67")) +
+  theme(
+    legend.position = "none"
+  )
+  
+```
+

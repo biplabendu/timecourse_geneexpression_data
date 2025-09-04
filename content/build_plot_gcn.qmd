@@ -46,7 +46,7 @@ sample.names <- c(
 # sample.cycles <- c("LD", "DD")
 
 ## SPECIFY THE DATASET TO BUILD GCN WITH
-which.sample <- sample.names[2]
+which.sample <- sample.names[1]
 
 writeLines(
   glue::glue("Sample: {which.sample}")
@@ -82,15 +82,58 @@ data.db[[which.sample]] |>
 
 # ONE-SHOT (make_modules)
 
-```{r}
-# data.db[[1]] |> 
-#   glimpse() |> 
-#   make_modules(
-#     min_expression = 1,
-#     min_timepoints = 4,
-#   ) |> 
-#   str(max.level = 1)
+## Input data
+
+```md
+|gene_name   |  ZT00|  ZT03|  ZT06|  ZT09|  ZT12|  ZT15|  ZT18|  ZT21|
+|:-----------|-----:|-----:|-----:|-----:|-----:|-----:|-----:|-----:|
+|FBgn0000008 | 4.852| 5.215| 4.281| 9.320| 7.119| 2.778| 7.372| 5.757|
+|FBgn0000008 | 4.663| 5.024| 4.115| 8.958| 6.904| 2.769| 7.086| 5.533|
+|FBgn0000014 | 0.039| 0.072| 3.509| 0.000| 0.056| 0.000| 0.016| 0.358|
+|FBgn0000015 | 0.000| 0.015| 4.928| 0.000| 0.000| 0.135| 0.000| 1.598|
 ```
+
+## Make and plot modules 
+```{r eval=FALSE, echo=TRUE}
+mods <- timecourseRnaseq::make_modules(
+  # data = data.db[[which.sample]],
+  data = data.db[[3]],
+  log2 = TRUE,
+  id_column = "gene_name",
+  min_expression = NULL,  # automatically estimated
+  min_timepoints = NULL,  # automatically estimated
+  method = "wgcna",
+  qc = FALSE,
+  sim_method = "kendall",
+  soft_power = NULL,      # automatically estimated
+  min_module_size = 50,
+  max_modules = 15,
+  merge_cutoff_similarity = 0.9,
+  plot_network_min_edge = 0.5,
+  plot_network = TRUE,
+  tidy_modules = FALSE
+  )
+
+mods |> str(max.level = 1)
+```
+
+## Modify network plot
+
+```{r eval=FALSE, echo=TRUE}
+plot_adj_as_network(
+  matrix = mods[["adj_matrix_ME"]][["ME"]],
+  # layout = igraph::layout.sugiyama,
+  layout = igraph::layout_in_circle, # changed layout
+  min_edge = 0.6,
+  node_label_size = 1.2,
+  node_size = 20,
+  edge_size = 3,
+  node_frame_col = "grey20",
+  node_fill_col = "grey80",
+  vertex.frame.width = 3
+)
+```
+
 
 # STEP-BY-STEP
 
@@ -215,7 +258,7 @@ my_estimate <- sft$fitIndices |>
   filter(
     SFT.R.sq > 0.8 &
       SFT.R.sq <= 0.9,
-    Power > 5 &
+    Power > 6 &
       Power < 14
   ) |> 
   arrange(
@@ -338,11 +381,11 @@ adj_matrix_ME <- calculate_module_module_sim(
 
 ### 2.5 Visualize the network
 
-```{r visualize_network, fig.height=8, fig.width=8}
+```{r visualize_network, fig.height=6, fig.width=6}
 plot_adj_as_network(
-  layout = igraph::layout_as_tree,
+  layout = igraph::layout_in_circle,
   matrix = adj_matrix_ME$ME,
-  min_edge = 0.65,
+  min_edge = 0.5,
   node_label_size = 1.2,
   node_size = 35,
   edge_size = 5,
@@ -561,19 +604,6 @@ Alldegrees1 = WGCNA::intramodularConnectivity(
     )
 ```
 
-> Calculate the signed kME and display the first few rows/columns.
-
-```{r}
-datKME = WGCNA::signedKME(
-  datExpr, 
-  merge[["modules"]]$newMEs, 
-  outputColumnName = ""
-)
-# # Display the first few rows of the data frame
-# datKME[1:6,1:6]
-```
-
-
 Plotting the mean (± 95% CI) connectivity of genes in different modules
 
 ```{r, fig.height=10, fig.width=8}
@@ -649,7 +679,8 @@ Alldegrees1 |>
   ) +
   facet_wrap(
     ~ type,
-    nrow = 2
+    nrow = 2,
+    scales = "free_x"
   ) +
   scale_x_continuous(
     n.breaks = 4

@@ -3,5 +3,8 @@ check_sample_quality <- function(data) {
   gsg = WGCNA::goodSamplesGenes(data, verbose = 3);
   if(gsg$allOK == TRUE) {
     cat("All okay!")
+  } else {
+    paste("Bad sample(s) detected!")
+    stop()
   }
 }
