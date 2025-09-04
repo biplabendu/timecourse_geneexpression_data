@@ -49,8 +49,8 @@ sample.names <- c(
   "panu-brain_stem",
   "panu-cerebellum",
   "panu-hypothalamus",
-  "panu-heart",
-  "panu-scn"
+  "panu-heart"
+  #"panu-scn"
 )
 # sample.cycles <- c("LD", "DD")
 
