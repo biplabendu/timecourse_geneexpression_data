@@ -26,11 +26,6 @@ website:
         file: build_plot_gcn_oneshot.qmd
       - text: "Rhy genes across tissues"
         file: build_plot_gcn_compare_tissues.qmd
-      # ###-###-###-###-###-###-###-###-###-###-###-###-
-      # - text: "Blocker Stats"
-      #   file: statsbook/blocker1.qmd
-      # # - text: "Eligibility"
-      # #   file: eligibility_tracker.qmd
       - text: "Contact"
         file: contact.qmd
 
