@@ -55,10 +55,10 @@ sample.names <- c(
 # sample.cycles <- c("LD", "DD")
 
 ## SPECIFY THE DATASET TO BUILD GCN WITH
-which.sample <- "dmel-heart"
+which.sample <- sample.names[1]
 
 writeLines(
-  glue::glue("Sample: {which.sample}")
+  glue::glue("Reference tissue: {which.sample}")
 )
 ```
 
@@ -82,8 +82,8 @@ tidydata.db <- purrr::map(
 ) |> 
   setNames(sample.names)
 
-cat("Structure of input data:")
-tidydata.db[[sample.names[1]]] |> 
+cat("Structure of reference tissue data:")
+tidydata.db[[which.sample]] |> 
   head(5) |> 
   mutate_if(
     is.numeric,
@@ -155,7 +155,7 @@ mods <- purrr::map(
 
 ```{r fig.height=6, fig.width=6}
 trash <- purrr::map(
-  sample.names,
+  which.sample,
   ~ timecourseRnaseq:::plot_adj_as_network(
       matrix = mods[[.x]][["adj_matrix_ME"]][["ME"]],
       # layout = igraph::layout.sugiyama,
@@ -251,7 +251,7 @@ trash <- purrr::map(
     ## MAKE YOUR LIST OF GENES OF INTEREST ##
     
     # LIST ONE - WGCNA modules
-    list1 <- l_module_genes[[x]]
+    list1 <- l_module_genes[[which.sample]]
     sapply(list1, length) |> print()
     
     ## LIST TWO - rhythmic genes
