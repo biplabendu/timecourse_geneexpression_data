@@ -161,7 +161,7 @@ l_module_genes <- mods[["module_genes"]] |>
   purrr::map(
     ~ .x |> pull(gene_name)
   ) |> 
-  setNames(unique(module_genes$module_identity))
+  setNames(unique(mods[["module_genes"]]$module_identity))
 
 # Load results of rhythmicity analyses
 db_rhy <- purrr::map(
@@ -289,7 +289,7 @@ which_var <- c("kTotal", "kWithin", "kOut", "kDiff")
 Alldegrees1 |>
   # rownames_to_column("gene_name") %>%
   left_join(
-    module_genes,
+    mods[["module_genes"]],
     join_by(gene_name)
   ) |>
   glimpse() |>
@@ -300,7 +300,7 @@ Alldegrees1 |>
       levels = paste0(
         "C",
         sort(
-          unique(module_genes$module_identity) |>
+          unique(mods[["module_genes"]]$module_identity) |>
             stringr::str_replace("C", "") |>
             as.integer()
         )
@@ -392,7 +392,7 @@ common_genes <- tidydata.db |>
     intersect
   ) |> 
   intersect(
-    mods$module_genes$gene_name
+    mods[["module_genes"]]$gene_name
   ) 
 
 # filter to keep only genes used in creating REF network
