@@ -106,47 +106,47 @@ tidydata.db[[which.sample]] |>
 
 ## Make and plot modules 
 ```{r fig.height=6, fig.width=6}
-mods <- purrr::map(
-  sample.names,
-  ~ timecourseRnaseq::make_modules(
-      data = tidydata.db[[.x]],
-      log2 = TRUE,
-      id_column = "gene_name",
-      min_expression = NULL,  # automatically estimated
-      min_timepoints = NULL,  # automatically estimated
-      method = "wgcna",
-      qc = TRUE,
-      sim_method = "kendall",
-      soft_power = 15,      # automatically estimated
-      min_module_size = 50,
-      max_modules = 16,
-      merge_cutoff_similarity = 0.9,
-      plot_network_min_edge = 0.5,
-      plot_network = FALSE,
-      tidy_modules = TRUE
-    )
-) |>
-  setNames(
-    sample.names
-  )
-
-# mods <- timecourseRnaseq::make_modules(
-#   data = tidydata.db[[which.sample]],
-#   log2 = TRUE,
-#   id_column = "gene_name",
-#   min_expression = NULL,  # automatically estimated
-#   min_timepoints = NULL,  # automatically estimated
-#   method = "wgcna",
-#   qc = TRUE,
-#   sim_method = "kendall",
-#   soft_power = 15,      # automatically estimated
-#   min_module_size = 50,
-#   max_modules = 16,
-#   merge_cutoff_similarity = 0.9,
-#   plot_network_min_edge = 0.5,
-#   plot_network = TRUE,
-#   tidy_modules = TRUE
+# mods <- purrr::map(
+#   sample.names,
+#   ~ timecourseRnaseq::make_modules(
+#       data = tidydata.db[[.x]],
+#       log2 = TRUE,
+#       id_column = "gene_name",
+#       min_expression = NULL,  # automatically estimated
+#       min_timepoints = NULL,  # automatically estimated
+#       method = "wgcna",
+#       qc = TRUE,
+#       sim_method = "kendall",
+#       soft_power = 15,      # automatically estimated
+#       min_module_size = 50,
+#       max_modules = 16,
+#       merge_cutoff_similarity = 0.9,
+#       plot_network_min_edge = 0.5,
+#       plot_network = FALSE,
+#       tidy_modules = TRUE
+#     )
+# ) |>
+#   setNames(
+#     sample.names
 #   )
+
+mods <- timecourseRnaseq::make_modules(
+  data = tidydata.db[[which.sample]],
+  log2 = TRUE,
+  id_column = "gene_name",
+  min_expression = NULL,  # automatically estimated
+  min_timepoints = NULL,  # automatically estimated
+  method = "wgcna",
+  qc = TRUE,
+  sim_method = "kendall",
+  soft_power = NULL,      # automatically estimated
+  min_module_size = 50,
+  max_modules = 16,
+  merge_cutoff_similarity = 0.9,
+  plot_network = FALSE,
+  # plot_network_min_edge = 0.5, # only used when `plot_network == TRUE`
+  tidy_modules = TRUE
+  )
 ```
 
 ## Modify network plot
@@ -154,20 +154,33 @@ mods <- purrr::map(
 > Internal function; use `:::` to call
 
 ```{r fig.height=6, fig.width=6}
-trash <- purrr::map(
-  which.sample,
-  ~ timecourseRnaseq:::plot_adj_as_network(
-      matrix = mods[[.x]][["adj_matrix_ME"]][["ME"]],
-      # layout = igraph::layout.sugiyama,
-      layout = igraph::layout_in_circle, # changed 
-      min_edge = 0.6,
-      node_label_size = 1.2,
-      node_size = 20,
-      edge_size = 3,
-      node_frame_col = "grey20",
-      node_fill_col = "grey80",
-      vertex.frame.width = 3
-    )
+# trash <- purrr::map(
+#   which.sample,
+#   ~ timecourseRnaseq:::plot_adj_as_network(
+#       matrix = mods[[.x]][["adj_matrix_ME"]][["ME"]],
+#       # layout = igraph::layout.sugiyama,
+#       layout = igraph::layout_in_circle, # changed 
+#       min_edge = 0.6,
+#       node_label_size = 1.2,
+#       node_size = 20,
+#       edge_size = 3,
+#       node_frame_col = "grey20",
+#       node_fill_col = "grey80",
+#       vertex.frame.width = 3
+#     )
+# )
+
+timecourseRnaseq:::plot_adj_as_network(
+  matrix = mods[["adj_matrix_ME"]][["ME"]],
+  # layout = igraph::layout.sugiyama,
+  layout = igraph::layout_in_circle, # changed 
+  min_edge = 0.6,
+  node_label_size = 1.2,
+  node_size = 30,
+  edge_size = 3,
+  node_frame_col = "grey20",
+  node_fill_col = "grey80",
+  vertex.frame.width = 3
 )
 
 ```
@@ -178,11 +191,13 @@ trash <- purrr::map(
 Obtain a list of genes in each module
 
 ```{r module_genes_list}
-module_genes <- purrr::map(
-  sample.names,
-  ~ mods[[.x]][["module_genes"]]
-) |> 
-  setNames(sample.names)
+# module_genes <- purrr::map(
+#   sample.names,
+#   ~ mods[[.x]][["module_genes"]]
+# ) |> 
+#   setNames(sample.names)
+
+module_genes <- mods[["module_genes"]]
 ```
 
 ## Identify rhythmic modules
@@ -196,23 +211,32 @@ db_rhy <- purrr::map(
 ) |> 
   setNames(sample.names)
 
+# l_module_genes <- purrr::map(
+#   sample.names,
+#   ~ module_genes[[.x]] |> 
+#     arrange(module_identity) |> 
+#     group_split(module_identity) |> 
+#     purrr::map(
+#       ~ .x |> pull(gene_name)
+#     ) |> 
+#     setNames(unique(module_genes[[.x]]$module_identity))
+# ) |> 
+#   setNames(sample.names)
+
+l_module_genes <- module_genes |> 
+  arrange(module_identity) |> 
+  group_split(module_identity) |> 
+  purrr::map(
+    ~ .x |> pull(gene_name)
+  ) |> 
+  setNames(unique(module_genes$module_identity))
+
 ###-###-###-###-###-###-###-###-
 # Set your p-value of choice
 # col_pval = "BH.Q"
 col_pval = "default.pvalue"
 # col_pval = "raw.pvalue"
 ###-###-###-###-###-###-###-###-
-l_module_genes <- purrr::map(
-  sample.names,
-  ~ module_genes[[.x]] |> 
-    arrange(module_identity) |> 
-    group_split(module_identity) |> 
-    purrr::map(
-      ~ .x |> pull(gene_name)
-    ) |> 
-    setNames(unique(module_genes[[.x]]$module_identity))
-) |> 
-  setNames(sample.names)
 
 l_rhy_genes <- purrr::map(
   sample.names,
@@ -240,19 +264,14 @@ l_rhy_genes <- purrr::map(
 > Modules vs. Rhythmic genes
 
 ```{r comparison_full, fig.height=6, fig.width=14}
+# LIST ONE - WGCNA modules
+list1 <- l_module_genes
+sapply(list1, length) |> print()
+
 trash <- purrr::map(
   sample.names,
   function(x) {
-    writeLines("
-    #####################################################
-    How many genes are in each of my geneset of interest?
-    #####################################################")
-    
-    ## MAKE YOUR LIST OF GENES OF INTEREST ##
-    
-    # LIST ONE - WGCNA modules
-    list1 <- l_module_genes[[which.sample]]
-    sapply(list1, length) |> print()
+    cat("Tissue:", x, "\n")
     
     ## LIST TWO - rhythmic genes
     list2 <- l_rhy_genes[[x]]
@@ -270,13 +289,15 @@ trash <- purrr::map(
     GeneOverlap::drawHeatmap(
       gom.1v2,
       adj.p = TRUE,
-      cutoff=0.05,
-      what="odds.ratio",
+      cutoff = 0.05,
+      what = "odds.ratio",
       # what="Jaccard",
       log.scale = T,
       note.col = "black",
       grid.col = "Oranges"
     )
+    
+    gom.1v2
   }
 )
 ```
