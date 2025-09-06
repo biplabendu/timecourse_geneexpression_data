@@ -117,7 +117,7 @@ mods <- timecourseRnaseq::make_modules(
   method = "wgcna",
   qc = TRUE,
   sim_method = "kendall",
-  soft_power = NULL,              # automatically estimated
+  soft_power = 15,              # automatically estimated
   min_module_size = 50,
   max_modules = 16,
   merge_cutoff_similarity = 0.9,
