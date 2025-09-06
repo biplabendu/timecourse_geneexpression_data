@@ -35,14 +35,14 @@ for (i in list.files(here::here("R"), full.names = TRUE)) {
 ## specify sample name
 sample.names <- c(
   # dmel
-  # "dmel-head",
-  # "dmel-body",
-  # "dmel-heart"
+  "dmel-head",
+  "dmel-body",
+  "dmel-heart"
   # # mmus
-  "mmus-brain_stem", 
-  "mmus-cerebellum", 
-  "mmus-hypothalamus", 
-  "mmus-heart"
+  # "mmus-brain_stem", 
+  # "mmus-cerebellum", 
+  # "mmus-hypothalamus", 
+  # "mmus-heart"
   # # panu
   # "panu-brain_stem",
   # "panu-cerebellum",
