@@ -1,0 +1,747 @@
+---
+title: "Compare time-course gene expression data across tissues"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+dttm <- Sys.Date()
+```
+
+> Last updated on `r dttm`.
+
+___
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = F)
+knitr::opts_chunk$set(message = F)
+
+## For more inspiration on customizing the html output, refer to the following:
+# https://bookdown.org/yihui/rmarkdown/html-document.html#table-of-contents
+
+```
+
+
+```{r lib_params}
+library(dplyr)
+library(dbplyr)
+library(ggplot2)
+for (i in list.files(here::here("R"), full.names = TRUE)) {
+  source(i)
+}
+
+# SAMPLE NAME
+## specify sample name
+sample.names <- c(
+  # dmel
+  "dmel-head",
+  "dmel-body",
+  "dmel-heart"
+  # # mmus
+  # "mmus-brain_stem",
+  # "mmus-cerebellum",
+  # "mmus-hypothalamus",
+  # "mmus-heart"
+  # # panu
+  # "panu-brain_stem",
+  # "panu-cerebellum",
+  # "panu-hypothalamus",
+  # "panu-heart",
+  # "panu-scn"
+)
+# sample.cycles <- c("LD", "DD")
+
+## SPECIFY THE DATASET TO BUILD GCN WITH
+ref.sample <- "dmel-head"
+
+writeLines(
+  glue::glue("Reference tissue: {ref.sample}")
+)
+```
+
+# Prep data
+
+Expected format: one row per gene, one col per sample
+
+```{r load_data, echo=FALSE}
+data.db <- load_data(
+  sample_names = sample.names
+)
+
+# clean up, create one row per gene
+tidydata.db <- purrr::map(
+  sample.names,
+  ~ data.db[[.x]] |> 
+    group_by(gene_name) |> 
+    reframe(
+      across(
+        everything(),
+        ~ mean(.x, na.rm = TRUE)
+      )
+    )
+) |> 
+  setNames(sample.names)
+
+cat("Structure of reference tissue data:")
+tidydata.db[[ref.sample]] |> 
+  head(5) |> 
+  mutate_if(
+    is.numeric,
+    ~ round(.x, 1)
+  ) |> 
+  DT::datatable(
+    caption = "Column 1: Name of feature (gene),
+    Columns 2-N: Timepoints, Value: Expression / Activity",
+    rownames = FALSE
+  )
+
+# cat("Here are the tables, in each database.")
+# purrr::map(
+#   tidydata.db,
+#   ~ src_dbi(.x)
+# )
+```
+
+# ONE-SHOT (make_modules)
+
+## Make modules in one call
+
+```{r make_modules, fig.height=6, fig.width=6}
+mods <- timecourseRnaseq::make_modules(
+  data = tidydata.db[[ref.sample]],
+  log2 = TRUE,
+  id_column = "gene_name",
+  min_expression = NULL,          # automatically estimated
+  min_timepoints = NULL,          # automatically estimated
+  method = "wgcna",
+  qc = TRUE,
+  sim_method = "kendall",
+  soft_power = 15,              # automatically estimated
+  min_module_size = 50,
+  max_modules = 16,
+  merge_cutoff_similarity = 0.9,
+  plot_network = FALSE,
+  # plot_network_min_edge = 0.5,  # used when `plot_network == TRUE`
+  tidy_modules = TRUE
+  )
+
+# saveRDS(
+#   mods,
+#   here::here(
+#     glue::glue(
+#       "result/tissue-comparison/ref_{ref.sample}timecourse-gcn.rds"
+#     )
+#   )
+# )
+```
+
+## Modify network plot
+
+> Internal function; use `:::` to call
+
+```{r plot_modules, fig.height=6, fig.width=6}
+timecourseRnaseq:::plot_adj_as_network(
+  matrix = mods[["adj_matrix_ME"]][["ME"]],
+  # layout = igraph::layout.sugiyama,         # default view
+  layout = igraph::layout_in_circle,          # changed
+  min_edge = 0.6,
+  node_label_size = 1.2,
+  node_size = 30,
+  edge_size = 3,
+  node_frame_col = "grey20",
+  node_fill_col = "grey80",
+  vertex.frame.width = 3
+)
+
+```
+
+
+# Annotate the network
+
+## Identify rhythmic modules
+
+```{r prep_geneoverlap}
+
+# Obtain a list of genes in each module
+l_module_genes <- mods[["module_genes"]] |> 
+  arrange(module_identity) |> 
+  group_split(module_identity) |> 
+  purrr::map(
+    ~ .x |> pull(gene_name)
+  ) |> 
+  setNames(unique(mods[["module_genes"]]$module_identity))
+
+# Load results of rhythmicity analyses
+db_rhy <- purrr::map(
+  sample.names,
+  ~ load_rhy_genes(
+      sample = .x
+    )
+) |> 
+  setNames(sample.names)
+
+# Set your p-value of choice
+###-###-###-###-###-###-###-###-
+# col_pval = "BH.Q"
+col_pval = "default.pvalue"
+# col_pval = "raw.pvalue"
+###-###-###-###-###-###-###-###-
+
+# Obtain a list of rhythmic genes in each tissue
+l_rhy_genes <- purrr::map(
+  sample.names,
+  ~ db_rhy[[.x]] |> 
+    purrr::map(
+      ~ .x |> 
+        filter(
+          if_all(
+            all_of(col_pval),
+            ~ .x < 0.05
+          )
+        ) |> 
+        filter(
+          ID %in% unlist(l_module_genes)
+        ) |> 
+        pull(1) |> 
+        unique()
+    ) |> 
+    purrr::compact()
+) |> 
+  setNames(sample.names)
+```
+
+
+> Modules vs. Rhythmic genes
+
+::: {.callout-note collapse=true}
+
+```{r comparison_full, fig.height=6, fig.width=14}
+# LIST ONE - WGCNA modules
+list1 <- l_module_genes
+sapply(list1, length) |> print()
+
+trash <- purrr::map(
+  sample.names,
+  function(x) {
+    cat("Tissue:", x, "\n")
+    
+    ## LIST TWO - rhythmic genes
+    list2 <- l_rhy_genes[[x]]
+    sapply(list2, length) |> print()
+    
+    ## CHECK FOR OVERLAP
+    # define size of genome
+    size = length(unique(c(unlist(list1), unlist(list2))))
+    # make a GOM object
+    gom.1v2 <- GeneOverlap::newGOM(
+      list2, 
+      list1,
+      genome.size = size
+    )
+    GeneOverlap::drawHeatmap(
+      gom.1v2,
+      adj.p = TRUE,
+      cutoff = 0.05,
+      what = "odds.ratio",
+      # what="Jaccard",
+      log.scale = T,
+      note.col = "black",
+      grid.col = "Oranges"
+    )
+    
+    gom.1v2
+  }
+) |> 
+  setNames(sample.names)
+```
+
+:::
+
+## Summary figure
+
+```{r}
+odds_ratio <- purrr::map_dfr(
+  sample.names,
+  ~ trash[[.x]] |> 
+    GeneOverlap::getMatrix(
+      "odds.ratio"
+    ) |> 
+    as.data.frame() |> 
+    tibble::rownames_to_column("test") |> 
+    tidyr::pivot_longer(
+      cols = !test,
+      names_to = "modules",
+      values_to = "odds.ratio"
+    ) |> 
+    mutate(
+      tissue = .x,
+      .before = 1
+    )
+)
+
+pvalues <- purrr::map_dfr(
+  sample.names,
+  ~ trash[[.x]] |> 
+    GeneOverlap::getMatrix(
+      "pval"
+    ) |> 
+    as.data.frame() |> 
+    tibble::rownames_to_column("test") |> 
+    tidyr::pivot_longer(
+      cols = !test,
+      names_to = "modules",
+      values_to = "pval"
+    ) |> 
+    mutate(
+      tissue = .x,
+      .before = 1
+    )
+)
+
+rhy_genes <- purrr::map_dfr(
+  sample.names,
+  function (x) {
+    algo <- names(l_rhy_genes[[x]])
+    tibble(
+      tissue = x,
+      test = algo,
+      n_rhy_genes = sapply(l_rhy_genes[[x]], length)
+    )
+  }
+)
+
+left_join(
+  odds_ratio,
+  pvalues,
+  join_by(test, modules, tissue)
+) |> 
+  left_join(
+    rhy_genes,
+    join_by(tissue, test)
+  ) |> 
+  # clean data
+  filter(
+    n_rhy_genes > 40
+  ) |> 
+  # check significance
+  mutate(
+    sig = if_else(
+      pval < 0.05,
+      TRUE,
+      FALSE
+    )
+  ) |> 
+  # STEP ONE
+  group_by(tissue, modules) |> 
+  reframe(
+    prop_sig = sum(sig) / n(),
+    tot_algo = n()
+  ) |> 
+  # STEP TWO
+  filter(
+    tot_algo > 3 &
+      prop_sig > 3/4
+  ) |> 
+  # TRANSFORM / VISUALIZE
+  select(- tot_algo) |> 
+  tidyr::pivot_wider(
+    names_from = modules,
+    values_from = prop_sig
+  ) |> 
+  mutate(
+    across(
+      !tissue,
+      ~ if_else(
+        is.na(.x), 
+        "-", 
+        paste0(
+          round(.x, 2)*100,
+          "%"
+        )
+      )
+    )
+  ) |> 
+  select(
+    tissue,
+    any_of(
+      paste0("C", 1:20)
+    )
+  ) |> 
+  kableExtra::kable()
+
+```
+
+# Module preservation
+
+## Prep data
+
+```{r run_module_pres}
+# tidydata.db |> 
+#   purrr::map_int(
+#     ~ nrow(.x)
+#   )
+
+# We work with two sets:
+nSets = 2;
+
+# Find the common set of genes across all samples
+common_genes <- tidydata.db |> 
+  purrr::map(
+    ~ .x |> 
+      pull(gene_name) |> 
+      unique()
+  ) |> 
+  purrr::reduce(
+    intersect
+  ) |> 
+  intersect(
+    mods[["module_genes"]]$gene_name
+  ) 
+
+# filter to keep only genes used in creating REF network
+samples.list <- tidydata.db |> 
+  purrr::map(
+    ~ .x |> 
+      filter(
+        gene_name %in% common_genes
+      )
+  )
+
+test_samples <- setdiff(sample.names, ref.sample)
+
+# OPTION 1: Read previous run from memory
+l_mp <- readRDS(
+  here::here(
+    glue::glue(
+      "result/tissue-comparison/ref_{ref.sample}_module-preservation.rds"
+    )
+  )
+)
+
+# # OPTION 2: Run module preservation for each tissue pair (Takes time)
+# l_mp <- purrr::map(
+#   test_samples,
+#   function (x) {
+#     multiExpr <- prep_data_module_preservation(
+#       data = samples.list,
+#       ref = ref.sample,
+#       test = x
+#     )
+# 
+#     # CHECKS
+#     #---#---#---#---#---#---#---#---#---#---#---#---
+#     # Check that the data has the correct format for many functions
+#     # operating on multiple sets:
+#     exprSize = WGCNA::checkSets(multiExpr)
+#     # Check that all genes and samples have sufficiently low numbers of
+#     # missing values.
+#     gsg = WGCNA::goodSamplesGenesMS(multiExpr, verbose = 1);
+#     cat("All samples okay?\n", gsg$allOK, "\n")
+#     #---#---#---#---#---#---#---#---#---#---#---#---
+# 
+#     # prep data
+#     #---#---#---#---#---#---#---#---#---#---#---#---
+#     # Expression data
+#     multiExpr_1 = list(
+#       ref = list(data = multiExpr[[1]]$data),
+#       test = list(data = multiExpr[[2]]$data)
+#     )
+#     ## filter to keep only the genes that we are working with
+#     mod.identity <- mods[["module_genes"]] |>
+#       select(
+#         gene_name,
+#         old_labels
+#       ) |>
+#       filter(
+#         gene_name %in% common_genes
+#       ) |>
+#       # !!this step is necessary!! #
+#       arrange(gene_name)
+#     ## specify the module identity of the genes
+#     moduleColors <- mod.identity |>  pull(old_labels)
+#     multiColor = list(ref = moduleColors)
+# 
+#     # Run module preservation
+#     #---#---#---#---#---#---#---#---#---#---#---#---
+#     mp = WGCNA::modulePreservation(
+#       multiExpr_1,
+#       multiColor,
+#       referenceNetworks = 1,
+#       nPermutations = 100,
+#       calculateQvalue = FALSE,
+#       quickCor = 0,
+#       verbose = 1
+#     )
+# 
+#     mp
+#   }
+# )
+# 
+# saveRDS(
+#   l_mp,
+#   here::here(
+#     glue::glue(
+#       "result/tissue-comparison/ref_{ref.sample}_module-preservation.rds"
+#     )
+#   )
+# )
+```
+
+::: {.callout-note collapse=true}
+
+## Plot results
+
+```{r fig.width=8, fig.height=8}
+l_zsummary <- purrr::map2(
+  l_mp,
+  test_samples,
+  function (mp, y) {
+    ref = 1
+    test = 2
+    statsObs = cbind(
+      mp$quality$observed[[ref]][[test]], 
+      mp$preservation$observed[[ref]][[test]]
+    )
+    statsZ = cbind(
+      mp$quality$Z[[ref]][[test]][,-1], 
+      mp$preservation$Z[[ref]][[test]][,-1]
+    )
+    
+    # Compare preservation to quality:
+    z.stats <- cbind(
+      statsObs[, c("moduleSize", "medianRank.pres", "medianRank.qual")],
+      signif(statsZ[, c("Zsummary.pres", "Zsummary.qual")], 2)
+    )
+    
+    mains = c(
+      "Preservation Median rank", 
+      "Preservation Zsummary"
+    )
+    pd <- position_dodge(0.5)
+    
+    # Plot
+    out <- z.stats |> 
+      tibble::rownames_to_column("old_labels") |> 
+      left_join(
+        distinct(mods[["module_genes"]][-1]), 
+        by="old_labels"
+      ) |> 
+      select(
+        module_name = module_identity,
+        module_size = moduleSize,
+        everything()
+      ) |> 
+      filter(
+        !is.na(module_name)
+      ) |>
+      mutate(
+        module_name = factor(
+          module_name, 
+          levels = unique(mods[["module_genes"]]$module_identity)
+        )
+      )
+    
+    ## PLOT PRESERVATION Z-SUMMARY
+    p <- out |> 
+      ggplot(aes(x=log10(module_size), y=Zsummary.pres)) +
+      geom_hline(yintercept = c(2,10), col="darkred", alpha=0.5) +
+      geom_point(
+        alpha=0.5, 
+        size=20, 
+        col="lightgrey",
+        position = pd
+      ) +
+      geom_text(
+        aes(label=module_name),
+        check_overlap = TRUE,
+        size = 5
+      ) +
+      theme_bw(20) +
+      scale_x_continuous(limits = c(0,max(log10(1000))+0.5),
+                         breaks = c(0,1,2,3),
+                         labels = c("0","10","100","1000")) +
+      xlab("module size (genes)") +
+      ylab(mains[2]) +
+      ggtitle(paste0("Test: ", y))
+    
+    print(p)
+
+    out
+  }
+) |> 
+  setNames(
+    test_samples
+  )
+```
+
+:::
+
+## Summary
+
+```{r}
+purrr::map_dfr(
+  test_samples,
+  ~ l_zsummary[[.x]] |> 
+    select(
+      modules = module_name,
+      zsumm = Zsummary.pres
+    ) |> 
+    mutate(
+      # ref = which.sample,
+      tissue = .x,
+      .before = 1
+    )
+) |> 
+  as_tibble() |> 
+  filter(
+    zsumm > 10
+  ) |> 
+  tidyr::pivot_wider(
+    names_from = modules,
+    values_from = zsumm
+  ) |> 
+  mutate(
+    across(
+      !tissue,
+      ~ if_else(
+        is.na(.x), 
+        "-", 
+        round(.x, 2) |> as.character()
+      )
+    )
+  ) |> 
+  select(
+    tissue,
+    any_of(
+      paste0("C", 1:20)
+    )
+  ) |> 
+  kableExtra::kable()
+  
+```
+
+
+
+# Network statistics
+
+From [WGCNA-tutorial](https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/Simulated-07-Membership.pdf)
+
+
+## Intramodular connectivity
+
+"We begin by calculating the intramodular connectivity for each gene. (In network literature, connectivity is often referred to as ”degree”.) The function intramodularConnectivity computes:
+
+- the whole network connectivity *kTotal*,
+- the within (intra)module connectivity *kWithin*,
+- the extra-modular connectivity *kOut*=kTotal-kWithin, and
+- the difference of the intra- and extra-modular connectivities *kDiff* = `kIn - kOut` = `2*kIN-kTotal`
+
+```{r}
+# From what I can tell, colorh1 in the tutorial refers to moduleColors
+colorh1 <- mods[["modules"]]$colors
+adj_matrix <- mods[["adj_matrix"]]
+
+# Calculate the connectivities of the genes
+Alldegrees1 = WGCNA::intramodularConnectivity(
+  adjMat = adj_matrix,
+  colors = colorh1
+) |>
+  mutate(
+    gene_name = rownames(adj_matrix),
+    across(
+      matches("^k"),
+      ~ round(.x, 2)
+    )
+  )
+```
+
+Plotting the mean (± 95% CI) connectivity of genes in different modules
+
+```{r, fig.height=12, fig.width=8}
+pd <- position_dodge(0.1)
+
+# which_var <- "kTotal"
+which_var <- c("kTotal", "kWithin", "kOut", "kDiff")
+
+Alldegrees1 |>
+  # rownames_to_column("gene_name") %>%
+  left_join(
+    mods[["module_genes"]],
+    join_by(gene_name)
+  ) |>
+  # PLOT FROM RAW DATA
+  mutate(
+    module_identity = factor(
+      module_identity,
+      levels = paste0(
+        "C",
+        sort(
+          unique(mods[["module_genes"]]$module_identity) |>
+            stringr::str_replace("C", "") |>
+            as.integer()
+        )
+      ) |> rev()
+    )
+  ) |>
+  summarySE(
+    measurevar = which_var,
+    groupvars = "module_identity"
+  ) |>
+  mutate(
+    type = factor(
+      type,
+      levels = which_var
+    )
+  ) |>
+  # Plot
+  ggplot(
+    aes(
+      y = module_identity,
+      x = mean,
+      group = interaction(module_identity, type)
+    )
+  ) +
+  geom_vline(xintercept = 0, col = "maroon", alpha = 0.7, lwd =1.2) +
+  labs(
+    y = "",
+    x = glue::glue(
+      "Connectivity"
+    ),
+    title = ""
+  ) +
+  ## Add error bar here
+  geom_errorbar(
+    aes(xmin = mean-ci, xmax = mean+ci),
+    width = 0.3,
+    position=pd,
+    lwd = 1.3,
+    col="black",
+    alpha = 1
+  ) +
+  # Add the points on top of the error bars
+  geom_point(
+    position = pd,
+    size = 3,
+    col = "black",
+    fill = "orange",
+    show.legend = F,
+    pch = 21,
+    alpha = 0.9
+  ) +
+  facet_wrap(
+    ~ type,
+    nrow = 2,
+    scales = "free_x"
+  ) +
+  scale_x_continuous(
+    n.breaks = 4
+  ) +
+  theme_bw(25) +
+  # scale_color_manual(values=c("#F20505","#F5D736","#0FBF67")) +
+  theme(
+    legend.position = "none"
+  )
+
+```
+

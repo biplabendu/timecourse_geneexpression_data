@@ -25,7 +25,13 @@ website:
       - text: "Build GCN (oneshot)"
         file: build_plot_gcn_oneshot.qmd
       - text: "Rhy genes across tissues"
-        file: build_plot_gcn_compare_tissues.qmd
+        menu: 
+          - text: "Mice"
+            href: build_plot_gcn_compare_tissues.qmd
+          - text: "Baboon"
+            href: build_plot_gcn_compare_tissues_panu.qmd
+          - text: "Flies"
+            href: build_plot_gcn_compare_tissues_dmel.qmd
       - text: "Contact"
         file: contact.qmd
 
