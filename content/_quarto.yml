@@ -32,6 +32,8 @@ website:
             href: build_plot_gcn_compare_tissues_panu.qmd
           - text: "Flies"
             href: build_plot_gcn_compare_tissues_dmel.qmd
+          - text: "Mosquitoes"
+            href: build_plot_gcn_compare_tissues_agam.qmd
       - text: "Contact"
         file: contact.qmd
 
