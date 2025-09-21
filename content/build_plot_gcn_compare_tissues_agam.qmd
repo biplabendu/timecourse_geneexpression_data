@@ -1,5 +1,5 @@
 ---
-title: "Compare time-course gene expression data across tissues"
+title: "Compare time-course GCN across tissues (Mosquito)"
 editor_options: 
   chunk_output_type: console
 ---
@@ -82,6 +82,26 @@ tidydata.db <- purrr::map(
         everything(),
         ~ mean(.x, na.rm = TRUE)
       )
+    ) |> 
+    tidyr::pivot_longer(
+      cols = !gene_name,
+      names_to = "time",
+      values_to = "exp"
+    ) |> 
+    mutate(
+      time = stringr::str_replace(
+        time, 
+        stringr::fixed(".1"),
+        ""
+      )
+    ) |> 
+    group_by(gene_name, time) |> 
+    reframe(
+      exp = mean(exp, na.rm = TRUE)
+    ) |> 
+    tidyr::pivot_wider(
+      names_from = time,
+      values_from = exp
     )
 ) |> 
   setNames(sample.names)
@@ -583,7 +603,7 @@ l_zsummary <- purrr::map2(
 ## Summary
 
 ```{r}
-purrr::map_dfr(
+z_summ <- purrr::map_dfr(
   test_samples,
   ~ l_zsummary[[.x]] |> 
     select(
@@ -596,10 +616,16 @@ purrr::map_dfr(
       .before = 1
     )
 ) |> 
-  as_tibble() |> 
+  as_tibble()
+
+z_summ |> 
   filter(
-    zsumm > 10
+    zsumm > 2
   ) |> 
+  arrange(
+    desc(zsumm)
+  ) |> 
+  head(6) |> 
   tidyr::pivot_wider(
     names_from = modules,
     values_from = zsumm
