@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://biplabendu.github.io/timecourse_geneexpression_data/build_plot_gcn_compare_tissues_dmel.html</loc>
-    <lastmod>2026-10-28T13:15:25.342Z</lastmod>
-  </url>
-  <url>
-    <loc>https://biplabendu.github.io/timecourse_geneexpression_data/build_plot_gcn_compare_tissues_agam.html</loc>
-    <lastmod>2026-10-28T13:15:25.342Z</lastmod>
-  </url>
-  <url>
     <loc>https://biplabendu.github.io/timecourse_geneexpression_data/build_plot_gcn.html</loc>
-    <lastmod>2026-10-28T13:15:25.342Z</lastmod>
+    <lastmod>2026-10-29T13:22:30.278Z</lastmod>
   </url>
   <url>
     <loc>https://biplabendu.github.io/timecourse_geneexpression_data/build_plot_gcn_oneshot.html</loc>
-    <lastmod>2026-10-28T13:15:25.342Z</lastmod>
-  </url>
-  <url>
-    <loc>https://biplabendu.github.io/timecourse_geneexpression_data/index.html</loc>
-    <lastmod>2026-10-28T13:15:25.342Z</lastmod>
+    <lastmod>2026-10-29T13:22:30.278Z</lastmod>
   </url>
   <url>
     <loc>https://biplabendu.github.io/timecourse_geneexpression_data/build_plot_gcn_compare_tissues_panu.html</loc>
-    <lastmod>2026-10-28T13:15:25.342Z</lastmod>
+    <lastmod>2026-10-29T13:22:30.278Z</lastmod>
   </url>
   <url>
     <loc>https://biplabendu.github.io/timecourse_geneexpression_data/build_plot_gcn_compare_tissues.html</loc>
-    <lastmod>2026-10-28T13:15:25.342Z</lastmod>
+    <lastmod>2026-10-29T13:22:30.278Z</lastmod>
+  </url>
+  <url>
+    <loc>https://biplabendu.github.io/timecourse_geneexpression_data/build_plot_gcn_compare_tissues_dmel.html</loc>
+    <lastmod>2026-10-29T13:22:30.278Z</lastmod>
+  </url>
+  <url>
+    <loc>https://biplabendu.github.io/timecourse_geneexpression_data/build_plot_gcn_compare_tissues_agam.html</loc>
+    <lastmod>2026-10-29T13:22:30.278Z</lastmod>
   </url>
   <url>
     <loc>https://biplabendu.github.io/timecourse_geneexpression_data/contact.html</loc>
-    <lastmod>2026-10-28T13:15:25.342Z</lastmod>
+    <lastmod>2026-10-29T13:22:30.278Z</lastmod>
+  </url>
+  <url>
+    <loc>https://biplabendu.github.io/timecourse_geneexpression_data/index.html</loc>
+    <lastmod>2026-10-29T13:22:30.278Z</lastmod>
   </url>
 </urlset>
